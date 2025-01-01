@@ -12,7 +12,6 @@ public class Bakery {
     JLabel counterLabel;
 
     public Bakery(){
-
         JFrame homeFrame = new JFrame("SUC Bakery");
         homeFrame.setLayout(new BorderLayout());
 
@@ -57,36 +56,48 @@ public class Bakery {
             public void actionPerformed(ActionEvent e) {
                 homeFrame.dispose();
 
-                //Handle button click
                 JFrame frame = new JFrame("SUC Bakery");
                 BakeryShop bk = new BakeryShop();
 
                 JPanel mainPanel = new JPanel();
                 JPanel receiptPanel = new JPanel(new BorderLayout());
+                JPanel receiptContentPanel = new JPanel(new BorderLayout());
+                JPanel checkoutPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+
                 receiptPanel.setBorder(new LineBorder(Color.BLACK, 2));
+                receiptPanel.setBackground(new Color(255, 246, 243));
+                receiptContentPanel.setBackground(new Color(255, 246, 243));
+                checkoutPanel.setBackground(new Color(255, 246, 243));
+                checkoutPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
                 mainPanel.setPreferredSize(new Dimension(700, 750));
                 mainPanel.setLayout(new GridLayout(3,3, 45, 45));
 
-                // Receipt Panel
-                receiptPanel.setBackground(new Color(255, 246, 243));
+                JButton checkoutButton = new JButton("Checkout");
+                checkoutButton.setPreferredSize(new Dimension(150, 70));
+                checkoutButton.setFont(new Font("SansSerif", Font.BOLD, 20));
+                checkoutButton.setBackground(new Color(42,178,123,255));
+                checkoutButton.setBorderPainted(false);
+                checkoutButton.setOpaque(true);
+                checkoutButton.setForeground(new Color(245,248,250,255));
+                checkoutButton.setFocusPainted(false);
+
+                checkoutPanel.add(checkoutButton);
+                receiptPanel.add(receiptContentPanel, BorderLayout.CENTER);
+                receiptPanel.add(checkoutPanel, BorderLayout.SOUTH);
 
                 for(Products product : bk.products){
-                    // Product Panel
                     JPanel productPanel = new JPanel();
                     productPanel.setBackground(new Color(255, 246, 243));
                     productPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 20));
 
-                    // Image Define Start
                     JLabel imageLabel = new JLabel();
                     ImageIcon imageIcon = new ImageIcon(product.getImage());
                     Image image = imageIcon.getImage();
-                    Image scaledImg = image.getScaledInstance(150, 100,  java.awt.Image.SCALE_SMOOTH);
+                    Image scaledImg = image.getScaledInstance(150, 100, java.awt.Image.SCALE_SMOOTH);
                     imageIcon = new ImageIcon(scaledImg);
                     imageLabel.setIcon(imageIcon);
-                    // Image Define End
 
-                    // Detail Panel Section
                     JLabel productNameLabel = new JLabel(product.getProductName());
                     JLabel priceLabel = new JLabel("RM " + Double.toString(product.getPrice()));
 
@@ -96,7 +107,6 @@ public class Bakery {
                     detailPanel.setLayout(new GridLayout(2, 1));
                     detailPanel.setBackground(new Color(255, 246, 243));
 
-                    // Counter Panel
                     JPanel counterPanel = new JPanel();
 
                     JButton counterAddBtn = new JButton("+");
@@ -192,6 +202,8 @@ public class Bakery {
                 mainPanel.add(Box.createVerticalStrut(0));
                 mainPanel.add(btnPanel);
 
+                checkoutButton.setVisible(false);
+
                 confirmButton.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e){
                         JLabel receiptLabel = new JLabel("Receipt");
@@ -204,18 +216,20 @@ public class Bakery {
                         DefaultTableModel model = new DefaultTableModel(columnNames,0);
                         JTable table = new JTable(model);
 
+                        boolean hasItems = false;
                         for (Products product : bk.products) {
                             int quantity = product.getCounter();
                             if (quantity > 0) {
+                                hasItems = true;
                                 double price = quantity * product.getPrice();
-                                total+=price;
+                                total += price;
 
                                 String stringPrice = String.format("RM %.2f", price);
                                 Object[] data = {product.getProductName(), quantity, stringPrice};
                                 model.addRow(data);
                             }
                         }
-
+                        checkoutButton.setVisible(hasItems);
                         String stringTotal = String.format("RM %.2f", total);
                         Object [] totalData = {"TOTAL:", "", stringTotal};
                         model.addRow(totalData);
@@ -227,23 +241,89 @@ public class Bakery {
                         JTableHeader header = table.getTableHeader();
                         header.setFont(new Font("SansSerif", Font.BOLD, 16));
 
-                        receiptPanel.removeAll();
-                        receiptPanel.add(receiptLabel,BorderLayout.NORTH);
-                        receiptPanel.add(new JScrollPane(table));
-                        receiptPanel.revalidate();
-                        receiptPanel.repaint();
+                        receiptContentPanel.removeAll();
+                        receiptContentPanel.add(receiptLabel, BorderLayout.NORTH);
+                        receiptContentPanel.add(new JScrollPane(table));
+                        checkoutButton.setVisible(hasItems);
+                        receiptContentPanel.revalidate();
+                        receiptContentPanel.repaint();
                     }
                 });
 
+// Inside clearButton's ActionListener, add:
                 clearButton.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e){
                         for (int i = 0; i < bk.products.size(); i++) {
                             bk.products.get(i).setCounter(0);
                             counterLabels.get(i).setText("0");
                         }
-                        receiptPanel.removeAll();
-                        receiptPanel.revalidate();
-                        receiptPanel.repaint();
+                        receiptContentPanel.removeAll();
+                        checkoutButton.setVisible(false);
+                        receiptContentPanel.revalidate();
+                        receiptContentPanel.repaint();
+                    }
+                });
+
+                checkoutButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        Order order = new Order();
+
+                        String donationInput = JOptionPane.showInputDialog(frame, "Would you like to make a donation? Enter amount (RM):", "Donation", JOptionPane.QUESTION_MESSAGE);
+                        double donationAmount = 0.0;
+
+                        if (donationInput != null && !donationInput.trim().isEmpty()) {
+                            try {
+                                donationAmount = Double.parseDouble(donationInput);
+                                if (donationAmount < 0) {
+                                    JOptionPane.showMessageDialog(frame, "Please enter a valid amount.", "Invalid Donation", JOptionPane.WARNING_MESSAGE);
+                                    return;
+                                }
+                            } catch (NumberFormatException ex) {
+                                JOptionPane.showMessageDialog(frame, "Please enter a valid amount.", "Invalid Donation", JOptionPane.WARNING_MESSAGE);
+                                return;
+                            }
+                        }
+                        order.setDonationAmount(donationAmount);
+
+                        for (Products product : bk.products) {
+                            int quantity = product.getCounter();
+                            if (quantity > 0) {
+                                order.addItem(product, quantity);
+                            }
+                        }
+
+                        JFrame summaryFrame = new JFrame("Order Summary");
+                        summaryFrame.setLayout(new BorderLayout());
+                        summaryFrame.setSize(400, 300);
+                        summaryFrame.setLocationRelativeTo(null);
+
+                        JTextArea summaryArea = new JTextArea();
+                        summaryArea.setEditable(false);
+                        summaryArea.setFont(new Font("SansSerif", Font.PLAIN, 16));
+
+                        StringBuilder summary = new StringBuilder();
+                        summary.append("Order Summary:\n\n");
+                        for (OrderItem item : order.getItems()) {
+                            summary.append(String.format("%s x%d - RM %.2f\n", item.getProductName(), item.getQuantity(), item.getTotalPrice()));
+                        }
+                        summary.append("\nDonation: RM ").append(String.format("%.2f", order.getDonationAmount())).append("\n");
+                        summary.append("Total Amount: RM ").append(String.format("%.2f", order.getTotalAmount())).append("\n");
+
+                        summaryArea.setText(summary.toString());
+                        summaryFrame.add(new JScrollPane(summaryArea), BorderLayout.CENTER);
+
+                        JButton confirmPaymentButton = new JButton("Confirm Payment");
+                        confirmPaymentButton.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                JOptionPane.showMessageDialog(summaryFrame, "Thank you for your order! Please pay the amount at the counter.", "Payment Successful", JOptionPane.INFORMATION_MESSAGE);
+                                summaryFrame.dispose();
+                            }
+                        });
+
+                        summaryFrame.add(confirmPaymentButton, BorderLayout.SOUTH);
+                        summaryFrame.setVisible(true);
                     }
                 });
 
