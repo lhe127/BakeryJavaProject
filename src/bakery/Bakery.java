@@ -86,7 +86,7 @@ public class Bakery {
                 receiptPanel.add(receiptContentPanel, BorderLayout.CENTER);
                 receiptPanel.add(checkoutPanel, BorderLayout.SOUTH);
 
-                for(Products product : bk.products){
+                for (Products product : bk.products) {
                     JPanel productPanel = new JPanel();
                     productPanel.setBackground(new Color(255, 246, 243));
                     productPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 20));
@@ -99,18 +99,35 @@ public class Bakery {
                     imageLabel.setIcon(imageIcon);
 
                     JLabel productNameLabel = new JLabel(product.getProductName());
+                    productNameLabel.setPreferredSize(new Dimension(150, 40));  // Set the width to control truncation
+                    productNameLabel.setFont(new Font("Arial", Font.BOLD, 18));
+                    productNameLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+                    // Truncate the text with ellipsis if the text is too long
+                    String displayText = product.getProductName().length() > 20 ? product.getProductName().substring(0, 17) + "..." : product.getProductName();
+                    productNameLabel.setText(displayText);
+
+                    // Set tooltip to show the full product name
+                    productNameLabel.setToolTipText(product.getProductName());
                     JLabel priceLabel = new JLabel("RM " + Double.toString(product.getPrice()));
+
+                    // Add a stock label
+                    JLabel stockLabel = new JLabel("Stock: " + product.getStock());
+                    stockLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+                    stockLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
                     JPanel detailPanel = new JPanel();
                     detailPanel.add(productNameLabel);
                     detailPanel.add(priceLabel);
-                    detailPanel.setLayout(new GridLayout(2, 1));
+                    detailPanel.add(stockLabel);  // Add stock label below the price
+                    detailPanel.setLayout(new GridLayout(3, 1));  // Ensure stock label fits without breaking layout
                     detailPanel.setBackground(new Color(255, 246, 243));
 
                     JPanel counterPanel = new JPanel();
 
                     JButton counterAddBtn = new JButton("+");
                     JButton counterSubtractBtn = new JButton("-");
+
                     counterLabel = new JLabel("0");
 
                     counterLabels.add(counterLabel);
@@ -151,16 +168,18 @@ public class Bakery {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             int currentCount = product.getCounter();
-                            product.setCounter(++currentCount);
-                            int index = bk.products.indexOf(product);
-                            counterLabels.get(index).setText(Integer.toString(product.getCounter()));
+                            if (currentCount < product.getStock()) { // Ensure we don't exceed stock
+                                product.setCounter(++currentCount);
+                                int index = bk.products.indexOf(product);
+                                counterLabels.get(index).setText(Integer.toString(product.getCounter()));
+                            }
                         }
                     });
 
                     counterSubtractBtn.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            if(product.getCounter() > 0){
+                            if (product.getCounter() > 0) {
                                 int currentCount = product.getCounter();
                                 product.setCounter(--currentCount);
                                 int index = bk.products.indexOf(product);
@@ -268,22 +287,93 @@ public class Bakery {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         Order order = new Order();
+                        JFrame donationFrame = new JFrame("Donation");
 
-                        String donationInput = JOptionPane.showInputDialog(frame, "Would you like to make a donation? Enter amount (RM):", "Donation", JOptionPane.QUESTION_MESSAGE);
-                        double donationAmount = 0.0;
+                        JButton button1 = new JButton("RM 1.00");
+                        JButton button2 = new JButton("RM 2.00");
+                        JButton button5 = new JButton("RM 5.00");
+                        JButton button10 = new JButton("RM 10.00");
+                        JButton customButton = new JButton("Custom Amount");
+                        JButton cancelButton = new JButton("Cancel");
 
-                        if (donationInput != null && !donationInput.trim().isEmpty()) {
-                            try {
-                                donationAmount = Double.parseDouble(donationInput);
-                                if (donationAmount < 0) {
-                                    JOptionPane.showMessageDialog(frame, "Please enter a valid amount.", "Invalid Donation", JOptionPane.WARNING_MESSAGE);
-                                    return;
+                        JPanel outerPanel = new JPanel(new BorderLayout());
+                        outerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+                        ImageIcon donateIcon = new ImageIcon("src/img/donation.png");
+                        ImageIcon scaledIcon = new ImageIcon(
+                                donateIcon.getImage().getScaledInstance(300, 200, Image.SCALE_SMOOTH)
+                        );
+                        JLabel imageLabel = new JLabel(scaledIcon);
+                        imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+                        JPanel imagePanel = new JPanel(new BorderLayout());
+                        imagePanel.add(imageLabel, BorderLayout.CENTER);
+                        imagePanel.setPreferredSize(new Dimension(400, 250));
+
+                        JPanel donationPanel = new JPanel(new GridLayout(3, 2, 20, 20));
+                        donationPanel.add(button1);
+                        donationPanel.add(button2);
+                        donationPanel.add(button5);
+                        donationPanel.add(button10);
+                        donationPanel.add(customButton);
+                        donationPanel.add(cancelButton);
+
+                        outerPanel.add(imagePanel, BorderLayout.NORTH);
+                        outerPanel.add(donationPanel, BorderLayout.CENTER);
+                        donationFrame.add(outerPanel);
+                        donationFrame.setSize(400, 500);
+                        donationFrame.setLocationRelativeTo(null);
+                        donationFrame.setVisible(true);
+
+                        // 变量存储捐赠金额
+                        final double[] donationAmount = {0.0};
+
+                        ActionListener donationListener = new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                if (e.getSource() == button1) {
+                                    donationAmount[0] = 1.0;
+                                } else if (e.getSource() == button2) {
+                                    donationAmount[0] = 2.0;
+                                } else if (e.getSource() == button5) {
+                                    donationAmount[0] = 5.0;
+                                } else if (e.getSource() == button10) {
+                                    donationAmount[0] = 10.0;
+                                } else if (e.getSource() == customButton) {
+                                    String input = JOptionPane.showInputDialog(donationFrame, "Enter your donation amount (RM):");
+                                    try {
+                                        double customAmount = Double.parseDouble(input);
+                                        if (customAmount < 0) {
+                                            JOptionPane.showMessageDialog(donationFrame, "Please enter a valid positive amount.", "Invalid Donation", JOptionPane.WARNING_MESSAGE);
+                                            return;
+                                        }
+                                        donationAmount[0] = customAmount;
+                                    } catch (NumberFormatException ex) {
+                                        JOptionPane.showMessageDialog(donationFrame, "Please enter a valid number.", "Invalid Donation", JOptionPane.WARNING_MESSAGE);
+                                        return;
+                                    }
                                 }
-                            } catch (NumberFormatException ex) {
-                                JOptionPane.showMessageDialog(frame, "Please enter a valid amount.", "Invalid Donation", JOptionPane.WARNING_MESSAGE);
-                                return;
+                                donationFrame.dispose();
+                                finalizeOrder(order, donationAmount[0]);
                             }
-                        }
+                        };
+
+                        // 为所有按钮绑定事件监听器
+                        button1.addActionListener(donationListener);
+                        button2.addActionListener(donationListener);
+                        button5.addActionListener(donationListener);
+                        button10.addActionListener(donationListener);
+                        customButton.addActionListener(donationListener);
+                        cancelButton.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                donationFrame.dispose();
+                                finalizeOrder(order, 0.0);
+                            }
+                        });
+                    }
+
+                    private void finalizeOrder(Order order, double donationAmount) {
                         order.setDonationAmount(donationAmount);
 
                         for (Products product : bk.products) {
@@ -293,11 +383,22 @@ public class Bakery {
                             }
                         }
 
+                        // 显示订单总结
                         JFrame summaryFrame = new JFrame("Order Summary");
                         summaryFrame.setLayout(new BorderLayout());
-                        summaryFrame.setSize(400, 300);
-                        summaryFrame.setLocationRelativeTo(null);
 
+                        summaryFrame.setSize(400, 500);
+                        summaryFrame.setLocationRelativeTo(null);
+                        ImageIcon paymentIcon = new ImageIcon("src/img/payment.jpg");
+                        ImageIcon scaledIcon1 = new ImageIcon(
+                                paymentIcon.getImage().getScaledInstance(300, 250, Image.SCALE_SMOOTH)
+                        );
+                        JLabel paymentLabel = new JLabel(scaledIcon1);
+                        paymentLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+                        JPanel paymentPanel = new JPanel(new BorderLayout());
+                        paymentPanel.add(paymentLabel, BorderLayout.CENTER);
+                        paymentPanel.setPreferredSize(new Dimension(400, 250));
                         JTextArea summaryArea = new JTextArea();
                         summaryArea.setEditable(false);
                         summaryArea.setFont(new Font("SansSerif", Font.PLAIN, 16));
@@ -323,6 +424,7 @@ public class Bakery {
                         });
 
                         summaryFrame.add(confirmPaymentButton, BorderLayout.SOUTH);
+                        summaryFrame.add(paymentPanel, BorderLayout.NORTH);
                         summaryFrame.setVisible(true);
                     }
                 });
