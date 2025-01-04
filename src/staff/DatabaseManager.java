@@ -1,5 +1,8 @@
 package staff;
 
+import bakery.Order;
+import bakery.OrderItem;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

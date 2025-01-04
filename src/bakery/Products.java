@@ -1,18 +1,24 @@
 package bakery;
 
 public class Products {
+    private int id;
     private String productName;
     private double price;
     private int stock;
     private int counter;
     private String image;
 
-    public Products(String productName, double price, int stock, int counter, String image) {
+    public Products(int id, String productName, double price, int stock, int counter, String image) {
+        this.id = id;
         this.productName = productName;
         this.price = price;
         this.stock = stock;
         this.counter = counter;
         this.image = image;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getProductName() {

@@ -1,7 +1,10 @@
 package bakery;
 
+import staff.DatabaseManager;
+
 import javax.swing.*;
 import java.awt.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.awt.event.*;
 import javax.swing.border.*;
@@ -269,7 +272,7 @@ public class Bakery {
                     }
                 });
 
-// Inside clearButton's ActionListener, add:
+                // Inside clearButton's ActionListener, add:
                 clearButton.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e){
                         for (int i = 0; i < bk.products.size(); i++) {
@@ -374,16 +377,152 @@ public class Bakery {
                     }
 
                     private void finalizeOrder(Order order, double donationAmount) {
-                        order.setDonationAmount(donationAmount);
+                        // Create a form to input additional information
+                        JFrame infoFrame = new JFrame("Customer Information");
+                        infoFrame.setLayout(new BorderLayout());
 
-                        for (Products product : bk.products) {
-                            int quantity = product.getCounter();
-                            if (quantity > 0) {
-                                order.addItem(product, quantity);
+                        // Information Panel for User Details and Delivery Information
+                        JPanel infoPanel = new JPanel();
+                        infoPanel.setLayout(new GridLayout(6, 2, 10, 10)); // Increased the rows to 6 to accommodate Pickup option
+
+                        // Customer Info Fields
+                        JLabel nameLabel = new JLabel("Name:");
+                        JTextField nameField = new JTextField();
+                        JLabel emailLabel = new JLabel("Email:");
+                        JTextField emailField = new JTextField();
+                        JLabel phoneLabel = new JLabel("Phone:");
+                        JTextField phoneField = new JTextField();
+
+                        // Delivery Info Fields
+                        JLabel addressLabel = new JLabel("Delivery Address:");
+                        JTextField addressField = new JTextField();
+                        JLabel deliveryTypeLabel = new JLabel("Delivery Type:");
+                        String[] deliveryOptions = {"Standard", "Express", "Pickup"}; // Added Pickup option
+                        JComboBox<String> deliveryTypeComboBox = new JComboBox<>(deliveryOptions);
+
+                        infoPanel.add(nameLabel);
+                        infoPanel.add(nameField);
+                        infoPanel.add(emailLabel);
+                        infoPanel.add(emailField);
+                        infoPanel.add(phoneLabel);
+                        infoPanel.add(phoneField);
+                        infoPanel.add(addressLabel);
+                        infoPanel.add(addressField);
+                        infoPanel.add(deliveryTypeLabel);
+                        infoPanel.add(deliveryTypeComboBox);
+
+                        JPanel buttonPanel = new JPanel();
+                        JButton nextButton = new JButton("Next");
+                        nextButton.setFont(new Font("SansSerif", Font.BOLD, 16));
+                        nextButton.setBackground(new Color(42, 178, 123));
+                        nextButton.setForeground(Color.WHITE);
+
+                        buttonPanel.add(nextButton);
+
+                        // Add the information panel and button to the frame
+                        infoFrame.add(infoPanel, BorderLayout.CENTER);
+                        infoFrame.add(buttonPanel, BorderLayout.SOUTH);
+
+                        infoFrame.setSize(400, 350);
+                        infoFrame.setLocationRelativeTo(null);
+                        infoFrame.setVisible(true);
+
+                        // Proceed to order summary once the user inputs the info
+                        nextButton.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                // Save the customer and delivery info
+                                String customerName = nameField.getText();
+                                String customerEmail = emailField.getText();
+                                String customerPhone = phoneField.getText();
+                                String deliveryAddress = addressField.getText();
+                                String deliveryType = (String) deliveryTypeComboBox.getSelectedItem();
+
+                                // Set donation amount for the order
+                                order.setDonationAmount(donationAmount);
+
+                                for (Products product : bk.products) {
+                                    int quantity = product.getCounter();
+                                    if (quantity > 0) {
+                                        order.addItem(product, quantity);
+                                    }
+                                }
+
+                                // Optional: You can print or store the customer and delivery info for future use
+                                System.out.println("Customer Info: " + customerName + ", " + customerEmail + ", " + customerPhone);
+                                System.out.println("Delivery Info: " + deliveryAddress + ", " + deliveryType);
+
+                                // If the user selects Pickup, don't ask for a delivery address
+                                if (deliveryType.equals("Pickup")) {
+                                    deliveryAddress = "Pickup at Store"; // Set a default message for Pickup
+                                }
+
+                                // Close the information frame and display order summary
+                                infoFrame.dispose();
+                                displayOrderSummary(order, customerName, customerEmail, customerPhone, deliveryAddress, deliveryType, donationAmount);
                             }
-                        }
+                        });
+                    }
 
-                        // 显示订单总结
+                    private void saveOrderToDatabase(Order order, String customerName, String customerEmail, String customerPhone,
+                                                     String deliveryAddress, String deliveryType, double donationAmount) {
+                        try (Connection connection = DatabaseManager.getConnection()) {
+
+                            // Insert customer data
+                            String customerQuery = "INSERT INTO Customer (name, email, phone) VALUES (?, ?, ?)";
+                            try (PreparedStatement customerStmt = connection.prepareStatement(customerQuery, Statement.RETURN_GENERATED_KEYS)) {
+                                customerStmt.setString(1, customerName);
+                                customerStmt.setString(2, customerEmail);
+                                customerStmt.setString(3, customerPhone);
+                                customerStmt.executeUpdate();
+                                ResultSet customerRs = customerStmt.getGeneratedKeys();
+                                customerRs.next();
+                                int customerId = customerRs.getInt(1);
+
+                                // Insert order data
+                                String orderQuery = "INSERT INTO `Order` (customer_id, donation_amount, total_amount, delivery_address, delivery_type) " +
+                                        "VALUES (?, ?, ?, ?, ?)";
+                                try (PreparedStatement orderStmt = connection.prepareStatement(orderQuery, Statement.RETURN_GENERATED_KEYS)) {
+                                    orderStmt.setInt(1, customerId);
+                                    orderStmt.setDouble(2, donationAmount);
+                                    orderStmt.setDouble(3, order.getTotalAmount());
+                                    orderStmt.setString(4, deliveryAddress);
+                                    orderStmt.setString(5, deliveryType);
+                                    orderStmt.executeUpdate();
+                                    ResultSet orderRs = orderStmt.getGeneratedKeys();
+                                    orderRs.next();
+                                    int orderId = orderRs.getInt(1);
+
+                                    // Insert order items (now using Product ID instead of Cake ID)
+                                    String itemQuery = "INSERT INTO orderitems (order_id, cake_id, quantity, total_price) VALUES (?, ?, ?, ?)";
+                                    try (PreparedStatement itemStmt = connection.prepareStatement(itemQuery)) {
+                                        for (OrderItem item : order.getItems()) {
+                                            itemStmt.setInt(1, orderId);
+                                            itemStmt.setInt(2, item.getProductId());  // Using getProductId() to get the Product's ID
+                                            itemStmt.setInt(3, item.getQuantity());
+                                            itemStmt.setDouble(4, item.getTotalPrice());
+                                            itemStmt.addBatch();
+                                        }
+                                        itemStmt.executeBatch();
+                                    }
+
+                                    // Insert donation data
+                                    String donationQuery = "INSERT INTO donation (order_id, amount) VALUES (?, ?)";
+                                    try (PreparedStatement donationStmt = connection.prepareStatement(donationQuery)) {
+                                        donationStmt.setInt(1, orderId);
+                                        donationStmt.setDouble(2, donationAmount);
+                                        donationStmt.executeUpdate();
+                                    }
+                                }
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    private void displayOrderSummary(Order order, String customerName, String customerEmail, String customerPhone,
+                                                     String deliveryAddress, String deliveryType, double donationAmount) {
+                        // Display the order summary in a separate JFrame
                         JFrame summaryFrame = new JFrame("Order Summary");
                         summaryFrame.setLayout(new BorderLayout());
 
@@ -399,6 +538,7 @@ public class Bakery {
                         JPanel paymentPanel = new JPanel(new BorderLayout());
                         paymentPanel.add(paymentLabel, BorderLayout.CENTER);
                         paymentPanel.setPreferredSize(new Dimension(400, 250));
+
                         JTextArea summaryArea = new JTextArea();
                         summaryArea.setEditable(false);
                         summaryArea.setFont(new Font("SansSerif", Font.PLAIN, 16));
@@ -410,6 +550,8 @@ public class Bakery {
                         }
                         summary.append("\nDonation: RM ").append(String.format("%.2f", order.getDonationAmount())).append("\n");
                         summary.append("Total Amount: RM ").append(String.format("%.2f", order.getTotalAmount())).append("\n");
+                        summary.append("\nDelivery Address: ").append(deliveryAddress).append("\n");
+                        summary.append("Delivery Type: ").append(deliveryType).append("\n");
 
                         summaryArea.setText(summary.toString());
                         summaryFrame.add(new JScrollPane(summaryArea), BorderLayout.CENTER);
@@ -418,7 +560,8 @@ public class Bakery {
                         confirmPaymentButton.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                JOptionPane.showMessageDialog(summaryFrame, "Thank you for your order! Please pay the amount at the counter.", "Payment Successful", JOptionPane.INFORMATION_MESSAGE);
+                                saveOrderToDatabase(order, customerName, customerEmail, customerPhone, deliveryAddress, deliveryType, donationAmount);
+                                JOptionPane.showMessageDialog(summaryFrame, "Thank you for your order!", "Payment Successful", JOptionPane.INFORMATION_MESSAGE);
                                 summaryFrame.dispose();
                             }
                         });

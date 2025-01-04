@@ -20,4 +20,8 @@ public class OrderItem {
     public int getQuantity() {
         return quantity;
     }
+
+    public int getProductId() {
+        return product.getId();  // Assuming Product class has getId() method
+    }
 }
