@@ -119,4 +119,51 @@ public class DatabaseManager {
             return false; // Return false if deletion failed
         }
     }
+
+    public static List<Object[]> getOrders() {
+        List<Object[]> orders = new ArrayList<>();
+        String sql = "SELECT o.id AS order_id, c.name AS customer_name, " +
+                "GROUP_CONCAT(CONCAT(ca.name, ' (', oi.quantity, ')') SEPARATOR ', ') AS cake_details, " +
+                "SUM(oi.quantity) AS total_items, " +
+                "SUM(oi.total_price) AS total_price, " +
+                "o.status AS order_status " + // Include the status column
+                "FROM orderitems oi " +
+                "JOIN `order` o ON oi.order_id = o.id " +
+                "JOIN customer c ON o.customer_id = c.id " +
+                "JOIN cakes ca ON oi.cake_id = ca.id " +
+                "GROUP BY o.id, c.name, o.status " + // Group by status as well
+                "ORDER BY o.id";
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Object[] order = new Object[6]; // Updated array size to include status
+                order[0] = rs.getInt("order_id");    // Order ID
+                order[1] = rs.getString("customer_name"); // Customer Name
+                order[2] = rs.getString("cake_details");   // Concatenated Cake Names and Quantities
+                order[3] = rs.getInt("total_items");     // Total Quantity
+                order[4] = rs.getDouble("total_price");  // Total Price
+                order[5] = rs.getString("order_status"); // Order Status
+
+                orders.add(order); // Add each order's details to the list
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Log error for debugging
+        }
+        return orders;
+    }
+
+    public static void updateOrderStatus(int orderId, String status) {
+        String sql = "UPDATE `order` SET status = ? WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, status);
+            pstmt.setInt(2, orderId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

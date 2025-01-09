@@ -33,16 +33,175 @@ public class Bakery {
         logoPanel.add(image1);
         logoPanel.setBackground(new Color(255, 246, 243));
 
+        // Add this code inside the Bakery constructor, in the buttonPanel section
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setPreferredSize(new Dimension(150, 150));
+        buttonPanel.setPreferredSize(new Dimension(400, 150));
         buttonPanel.setBackground(new Color(255, 246, 243));
 
         JButton menuButton = new JButton("ORDER NOW");
+        JButton trackButton = new JButton("TRACK ORDER");
+
         buttonPanel.add(menuButton);
+        buttonPanel.add(trackButton);
 
         menuButton.setPreferredSize(new Dimension(200, 100));
         menuButton.setFont(new Font("SansSerif", Font.BOLD, 20));
         menuButton.setForeground(Color.red);
+
+        trackButton.setPreferredSize(new Dimension(200, 100));
+        trackButton.setFont(new Font("SansSerif", Font.BOLD, 20));
+        trackButton.setForeground(new Color(42,178,123));
+
+// Add the track order button functionality
+        trackButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFrame trackFrame = new JFrame("Track Order");
+                trackFrame.setLayout(new BorderLayout());
+
+                // Panel for input
+                JPanel inputPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+                inputPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+                JTextField nameField = new JTextField(20);
+                JTextField phoneField = new JTextField(20);
+                JButton searchButton = new JButton("Search");
+
+                inputPanel.add(new JLabel("Name:"));
+                inputPanel.add(nameField);
+                inputPanel.add(new JLabel("Phone Number:"));
+                inputPanel.add(phoneField);
+                inputPanel.add(new JLabel("")); // Empty label for spacing
+                inputPanel.add(searchButton);
+
+                // Panel for displaying order details
+                JPanel orderDetailsPanel = new JPanel();
+                orderDetailsPanel.setLayout(new BoxLayout(orderDetailsPanel, BoxLayout.Y_AXIS));
+                orderDetailsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+                // Add components to frame
+                trackFrame.add(inputPanel, BorderLayout.NORTH);
+                trackFrame.add(new JScrollPane(orderDetailsPanel), BorderLayout.CENTER);
+
+                searchButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        orderDetailsPanel.removeAll();
+
+                        String name = nameField.getText().trim();
+                        String phone = phoneField.getText().trim();
+
+                        if (name.isEmpty() || phone.isEmpty()) {
+                            JOptionPane.showMessageDialog(trackFrame,
+                                    "Please enter both name and phone number",
+                                    "Missing Information",
+                                    JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+
+                        displayOrderStatus(name, phone, orderDetailsPanel);
+                        orderDetailsPanel.revalidate();
+                        orderDetailsPanel.repaint();
+                    }
+                });
+
+                trackFrame.setSize(600, 400);
+                trackFrame.setLocationRelativeTo(null);
+                trackFrame.setVisible(true);
+            }
+
+            private void displayOrderStatus(String customerName, String phone, JPanel panel) {
+                try (Connection conn = DatabaseManager.getConnection()) {
+                    String query = """
+                SELECT o.id, o.status, o.delivery_type, o.delivery_address,
+                       c.name, c.phone, GROUP_CONCAT(oi.quantity, 'x ', ca.name) as items,
+                       o.total_amount, o.donation_amount
+                FROM `Order` o
+                JOIN Customer c ON o.customer_id = c.id
+                JOIN orderitems oi ON o.id = oi.order_id
+                JOIN cakes ca ON oi.cake_id = ca.id
+                WHERE c.name = ? AND c.phone = ? 
+                AND (o.status = 'preparing' OR o.status = 'ready')
+                GROUP BY o.id
+                ORDER BY o.id DESC
+                LIMIT 1
+            """;
+
+                    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                        stmt.setString(1, customerName);
+                        stmt.setString(2, phone);
+                        ResultSet rs = stmt.executeQuery();
+
+                        if (rs.next()) {
+                            // Order found, create a panel for each section
+                            JPanel detailsPanel = new JPanel();
+                            detailsPanel.setLayout(new GridLayout(0, 1, 0, 5));
+                            detailsPanel.setBackground(new Color(255, 246, 243));
+
+                            // Get order details
+                            String status = rs.getString("status");
+                            String deliveryType = rs.getString("delivery_type");
+                            String address = rs.getString("delivery_address");
+                            String items = rs.getString("items");
+                            double totalAmount = rs.getDouble("total_amount");
+                            double donationAmount = rs.getDouble("donation_amount");
+                            int orderId = rs.getInt("id");
+
+                            // Create and add all labels
+                            JLabel orderIdLabel = new JLabel("Order #" + orderId);
+                            orderIdLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+
+                            JLabel statusLabel = new JLabel("Status: " + status.toUpperCase());
+                            statusLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+                            statusLabel.setForeground(status.equals("ready") ?
+                                    new Color(42,178,123) : new Color(255, 165, 0));
+
+                            // Add details with consistent font
+                            Font detailFont = new Font("SansSerif", Font.PLAIN, 14);
+
+                            detailsPanel.add(orderIdLabel);
+                            detailsPanel.add(statusLabel);
+                            detailsPanel.add(createDetailLabel("Customer: " + customerName, detailFont));
+                            detailsPanel.add(createDetailLabel("Phone: " + phone, detailFont));
+                            detailsPanel.add(createDetailLabel("Delivery: " + deliveryType, detailFont));
+                            detailsPanel.add(createDetailLabel("Address: " + address, detailFont));
+                            detailsPanel.add(createDetailLabel("Items:", detailFont));
+
+                            // Split items and add each on a new line
+                            String[] itemsList = items.split(",");
+                            for (String item : itemsList) {
+                                detailsPanel.add(createDetailLabel("   • " + item.trim(), detailFont));
+                            }
+
+                            detailsPanel.add(createDetailLabel(String.format("Total Amount: RM %.2f", totalAmount), detailFont));
+                            detailsPanel.add(createDetailLabel(String.format("Donation Amount: RM %.2f", donationAmount), detailFont));
+
+                            // Add the details panel to the main panel
+                            panel.add(detailsPanel);
+
+                        } else {
+                            // No order found
+                            JLabel notFoundLabel = new JLabel("No active orders found for " + customerName);
+                            notFoundLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+                            notFoundLabel.setForeground(Color.RED);
+                            panel.add(notFoundLabel);
+                        }
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JLabel errorLabel = new JLabel("Error retrieving order information");
+                    errorLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+                    errorLabel.setForeground(Color.RED);
+                    panel.add(errorLabel);
+                }
+            }
+
+            private JLabel createDetailLabel(String text, Font font) {
+                JLabel label = new JLabel(text);
+                label.setFont(font);
+                return label;
+            }
+        });
 
         homeFrame.add(welcomePanel, BorderLayout.NORTH);
         homeFrame.add(logoPanel, BorderLayout.CENTER);
@@ -560,9 +719,28 @@ public class Bakery {
                         confirmPaymentButton.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
+                                // Save the order to the database
                                 saveOrderToDatabase(order, customerName, customerEmail, customerPhone, deliveryAddress, deliveryType, donationAmount);
+
+                                // Reduce stock based on the quantity of items ordered
+                                try (Connection connection = DatabaseManager.getConnection()) {
+                                    String updateStockQuery = "UPDATE cakes SET stock = stock - ? WHERE id = ?";
+                                    try (PreparedStatement stmt = connection.prepareStatement(updateStockQuery)) {
+                                        for (OrderItem item : order.getItems()) {
+                                            stmt.setInt(1, item.getQuantity()); // Reduce stock by the ordered quantity
+                                            stmt.setInt(2, item.getProductId()); // Identify the product by its ID
+                                            stmt.addBatch(); // Add to batch for batch execution
+                                        }
+                                        stmt.executeBatch(); // Execute all the updates in batch
+                                    }
+                                } catch (SQLException ex) {
+                                    ex.printStackTrace();
+                                }
+
+                                // Show success message and close the window
                                 JOptionPane.showMessageDialog(summaryFrame, "Thank you for your order!", "Payment Successful", JOptionPane.INFORMATION_MESSAGE);
                                 summaryFrame.dispose();
+                                frame.dispose();
                             }
                         });
 
