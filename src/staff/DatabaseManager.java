@@ -122,48 +122,100 @@ public class DatabaseManager {
 
     public static List<Object[]> getOrders() {
         List<Object[]> orders = new ArrayList<>();
+        // Modify the query to order by 'order_id' in descending order
         String sql = "SELECT o.id AS order_id, c.name AS customer_name, " +
                 "GROUP_CONCAT(CONCAT(ca.name, ' (', oi.quantity, ')') SEPARATOR ', ') AS cake_details, " +
                 "SUM(oi.quantity) AS total_items, " +
                 "SUM(oi.total_price) AS total_price, " +
-                "o.status AS order_status " + // Include the status column
+                "o.donation_amount, o.delivery_address, o.completion_time, o.status AS order_status " +
                 "FROM orderitems oi " +
                 "JOIN `order` o ON oi.order_id = o.id " +
                 "JOIN customer c ON o.customer_id = c.id " +
                 "JOIN cakes ca ON oi.cake_id = ca.id " +
-                "GROUP BY o.id, c.name, o.status " + // Group by status as well
-                "ORDER BY o.id";
+                "GROUP BY o.id, c.name, o.donation_amount, o.delivery_address, o.completion_time, o.status " +
+                "ORDER BY o.id DESC"; // Change to DESC for descending order
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                Object[] order = new Object[6]; // Updated array size to include status
+                Object[] order = new Object[9]; // Array size to hold order data
                 order[0] = rs.getInt("order_id");    // Order ID
                 order[1] = rs.getString("customer_name"); // Customer Name
                 order[2] = rs.getString("cake_details");   // Concatenated Cake Names and Quantities
                 order[3] = rs.getInt("total_items");     // Total Quantity
                 order[4] = rs.getDouble("total_price");  // Total Price
-                order[5] = rs.getString("order_status"); // Order Status
+                order[5] = rs.getDouble("donation_amount"); // Donation Amount
+                order[6] = rs.getString("delivery_address"); // Delivery Address
+                order[7] = rs.getTimestamp("completion_time"); // Completion Time
+                order[8] = rs.getString("order_status"); // Order Status
 
-                orders.add(order); // Add each order's details to the list
+                orders.add(order); // Add the order to the list
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Log error for debugging
+            e.printStackTrace(); // Print SQL exception for debugging
         }
         return orders;
     }
 
-    public static void updateOrderStatus(int orderId, String status) {
-        String sql = "UPDATE `order` SET status = ? WHERE id = ?";
+    public static void updateOrderStatus(int orderId, String status, java.sql.Timestamp completionTime) {
+        String sql = "UPDATE `order` SET status = ?, completion_time = ? WHERE id = ?";
+
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, status);
-            pstmt.setInt(2, orderId);
-            pstmt.executeUpdate();
+
+            pstmt.setString(1, status);  // Set the new status
+            pstmt.setTimestamp(2, completionTime);  // Set the current time as completion_time
+            pstmt.setInt(3, orderId);  // Set the order ID
+
+            pstmt.executeUpdate();  // Execute the update
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace();  // Log any SQL exceptions
         }
+    }
+    public static List<String> getDonationHistoryFromOrders() {
+        List<String> historyList = new ArrayList<>();
+        // SQL query to join `order` with `customer` and fetch the necessary data
+        String sql = "SELECT c.name, o.donation_amount FROM `order` o " +
+                "INNER JOIN customer c ON o.customer_id = c.id " +
+                "WHERE o.donation_amount > 0 " +
+                "ORDER BY o.id DESC";
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                String name = rs.getString("name"); // Get customer's name
+                double donationAmount = rs.getDouble("donation_amount");
+
+                // Format donation info
+                String donationDetails = String.format("%s donated RM%.2f", name, donationAmount);
+                historyList.add(donationDetails);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Log error for debugging
+        }
+        return historyList;
+    }
+
+    public static double getTotalDonationFromOrders() {
+        double totalDonation = 0;
+        // SQL query to calculate the total donation from the `order` table
+        String sql = "SELECT SUM(donation_amount) FROM `order` WHERE donation_amount > 0";
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                totalDonation = rs.getDouble(1); // Get the sum of donations
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Log error for debugging
+        }
+        return totalDonation;
     }
 }
