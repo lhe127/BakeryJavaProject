@@ -133,7 +133,7 @@ public class DatabaseManager {
                 "JOIN customer c ON o.customer_id = c.id " +
                 "JOIN cakes ca ON oi.cake_id = ca.id " +
                 "GROUP BY o.id, c.name, o.donation_amount, o.delivery_address, o.completion_time, o.status " +
-                "ORDER BY o.id DESC"; // Change to DESC for descending order
+                "ORDER BY completion_time DESC"; // Change to DESC for descending order
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
