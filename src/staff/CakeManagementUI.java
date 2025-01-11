@@ -13,10 +13,6 @@ import java.util.List;
 public class CakeManagementUI {
     private static final int MAX_CAKES = 6;
 
-//    public static void main(String[] args) {
-//        SwingUtilities.invokeLater(CakeManagementUI::createAndShowGUI);
-//    }
-
     static void createAndShowGUI() {
         JFrame frame = new JFrame("Cake Management System");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -125,43 +121,49 @@ public class CakeManagementUI {
                 String priceInput = JOptionPane.showInputDialog(frame, "Enter New Cake Price:", tableModel.getValueAt(selectedRow, 1));
                 String stockInput = JOptionPane.showInputDialog(frame, "Enter New Cake Stock:", tableModel.getValueAt(selectedRow, 2));
 
-                // Use JFileChooser for image update
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setDialogTitle("Select New Cake Image");
-                fileChooser.setFileFilter(new FileNameExtensionFilter("Image Files", "jpg", "jpeg", "png"));
-                int result = fileChooser.showOpenDialog(frame);
-                String newImagePath = null;
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = fileChooser.getSelectedFile();
-                    newImagePath = selectedFile.getAbsolutePath();
+                String existingImagePath = (String) tableModel.getValueAt(selectedRow, 3); // Assuming the image path is stored in column 3
+                String newImagePath = existingImagePath; // Default to the existing image path
+
+                // Ask the user if they want to update the image
+                int updateImageOption = JOptionPane.showConfirmDialog(frame, "Do you want to update the cake image?", "Update Image", JOptionPane.YES_NO_OPTION);
+
+                if (updateImageOption == JOptionPane.YES_OPTION) {
+                    // Use JFileChooser for image update
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setDialogTitle("Select New Cake Image");
+                    fileChooser.setFileFilter(new FileNameExtensionFilter("Image Files", "jpg", "jpeg", "png"));
+                    int result = fileChooser.showOpenDialog(frame);
+
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        File selectedFile = fileChooser.getSelectedFile();
+                        newImagePath = selectedFile.getAbsolutePath();
+                    }
                 }
 
-                if (newImagePath != null && !newImagePath.trim().isEmpty()) {
-                    try {
-                        double newPrice = Double.parseDouble(priceInput);
-                        int newStock = Integer.parseInt(stockInput);
+                try {
+                    double newPrice = Double.parseDouble(priceInput);
+                    int newStock = Integer.parseInt(stockInput);
 
-                        // Ensure the image is saved into src/img
+                    // If a new image was selected, copy it to the 'src/img' directory
+                    if (!newImagePath.equals(existingImagePath)) {
                         File sourceImage = new File(newImagePath);
                         String destinationPath = "src/img/" + sourceImage.getName();
                         File destinationFile = new File(destinationPath);
 
-                        // Copy the new image to the 'src/img' directory
                         Files.copy(sourceImage.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-                        if (DatabaseManager.updateCake(oldName, newName, newPrice, newStock, destinationPath)) {
-                            JOptionPane.showMessageDialog(frame, "Cake updated successfully!");
-                            loadCakes(tableModel);
-                        } else {
-                            JOptionPane.showMessageDialog(frame, "Failed to update cake.", "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    } catch (NumberFormatException ex) {
-                        JOptionPane.showMessageDialog(frame, "Invalid price or stock input.", "Error", JOptionPane.ERROR_MESSAGE);
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(frame, "Failed to save the image file.", "Error", JOptionPane.ERROR_MESSAGE);
+                        newImagePath = destinationPath; // Update the image path for the database
                     }
-                } else {
-                    JOptionPane.showMessageDialog(frame, "Please select a valid image for the cake.", "Error", JOptionPane.ERROR_MESSAGE);
+
+                    if (DatabaseManager.updateCake(oldName, newName, newPrice, newStock, newImagePath)) {
+                        JOptionPane.showMessageDialog(frame, "Cake updated successfully!");
+                        loadCakes(tableModel);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "Failed to update cake.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(frame, "Invalid price or stock input.", "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(frame, "Failed to save the image file.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 JOptionPane.showMessageDialog(frame, "Please select a cake to update.", "Warning", JOptionPane.WARNING_MESSAGE);

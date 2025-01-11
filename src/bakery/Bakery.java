@@ -559,16 +559,32 @@ public class Bakery {
                         String[] deliveryOptions = {"Standard", "Express", "Pickup"}; // Added Pickup option
                         JComboBox<String> deliveryTypeComboBox = new JComboBox<>(deliveryOptions);
 
+                        deliveryTypeComboBox.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                // Check the selected option
+                                String selectedOption = (String) deliveryTypeComboBox.getSelectedItem();
+                                if ("Pickup".equals(selectedOption)) {
+                                    addressField.setText(""); // Clear the address field
+                                    addressField.setEnabled(false); // Disable the address field
+                                    addressField.setBackground(Color.LIGHT_GRAY);
+                                } else {
+                                    addressField.setEnabled(true); // Enable the address field
+                                    addressField.setBackground(Color.WHITE);
+                                }
+                            }
+                        });
+
                         infoPanel.add(nameLabel);
                         infoPanel.add(nameField);
                         infoPanel.add(emailLabel);
                         infoPanel.add(emailField);
                         infoPanel.add(phoneLabel);
                         infoPanel.add(phoneField);
-                        infoPanel.add(addressLabel);
-                        infoPanel.add(addressField);
                         infoPanel.add(deliveryTypeLabel);
                         infoPanel.add(deliveryTypeComboBox);
+                        infoPanel.add(addressLabel);
+                        infoPanel.add(addressField);
 
                         JPanel buttonPanel = new JPanel();
                         JButton nextButton = new JButton("Next");

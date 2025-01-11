@@ -1,6 +1,6 @@
 package bakery;
 
-public class OrderItem {
+public class OrderItem implements IOrderItem {
     private Products product;
     private int quantity;
 
@@ -9,19 +9,23 @@ public class OrderItem {
         this.quantity = quantity;
     }
 
+    @Override
     public double getTotalPrice() {
         return product.getPrice() * quantity;
     }
 
+    @Override
     public String getProductName() {
         return product.getProductName();
     }
 
+    @Override
     public int getQuantity() {
         return quantity;
     }
 
+    @Override
     public int getProductId() {
-        return product.getId();  // Assuming Product class has getId() method
+        return product.getId();
     }
 }
