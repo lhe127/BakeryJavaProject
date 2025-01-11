@@ -1,6 +1,5 @@
 package staff;
 
-import staff.DatabaseManager;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -14,17 +13,20 @@ public class StaffOrderSummary {
     private JTable orderTable;
     private DefaultTableModel tableModel;
 
+    // Constructor no longer creates JFrame
     public StaffOrderSummary() {
-        // Initialize the frame
+        // Initialize components but do not create the JFrame yet
+        tableModel = new DefaultTableModel(new String[] {
+                "Order ID", "Customer Name", "Cake", "Total Items", "Total Price", "Donation", "Delivery Address", "Completion Time", "Status"
+        }, 0);
+    }
+
+    public void createAndShowGUI() {
+        // Initialize the frame here (it won't be initialized in constructor)
         frame = new JFrame("Order Summary");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(900, 600);
         frame.setLocationRelativeTo(null); // Center the window
-
-        // Create table model with column names
-        tableModel = new DefaultTableModel(new String[] {
-                "Order ID", "Customer Name", "Cake", "Total Items", "Total Price", "Donation", "Delivery Address", "Completion Time", "Status"
-        }, 0);
 
         // Create the JTable and apply custom styles
         orderTable = new JTable(tableModel) {
@@ -36,7 +38,6 @@ public class StaffOrderSummary {
             }
         };
 
-        // Improved font and row height for better readability
         orderTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         orderTable.setRowHeight(40);
         orderTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -59,25 +60,21 @@ public class StaffOrderSummary {
         orderTable.getColumn("Status").setCellRenderer(new StatusButtonRenderer());
         orderTable.getColumn("Status").setCellEditor(new StatusButtonEditor(new JCheckBox()));
 
-        // Create a JScrollPane and add the table
         JScrollPane scrollPane = new JScrollPane(orderTable);
         frame.add(scrollPane, BorderLayout.CENTER);
 
-        // Add title and panel for aesthetics
         JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(70, 130, 180)); // Steel blue background
+        headerPanel.setBackground(new Color(70, 130, 180));
         JLabel titleLabel = new JLabel("Order Summary");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel);
 
-        // Add buttons for filtering the orders by status with enhanced styles
         JPanel buttonPanel = new JPanel();
-        JButton preparingButton = createStyledButton("Preparing", new Color(34, 139, 34)); // Green
-        JButton readyButton = createStyledButton("Ready", new Color(255, 140, 0)); // Orange
-        JButton completeButton = createStyledButton("Complete", new Color(70, 130, 180)); // Steel blue
+        JButton preparingButton = createStyledButton("Preparing", new Color(34, 139, 34));
+        JButton readyButton = createStyledButton("Ready", new Color(255, 140, 0));
+        JButton completeButton = createStyledButton("Complete", new Color(70, 130, 180));
 
-        // Add ActionListeners to buttons
         preparingButton.addActionListener(e -> filterOrders("Preparing"));
         readyButton.addActionListener(e -> filterOrders("Ready"));
         completeButton.addActionListener(e -> filterOrders("Complete"));
@@ -86,14 +83,10 @@ public class StaffOrderSummary {
         buttonPanel.add(readyButton);
         buttonPanel.add(completeButton);
 
-        // Add the header panel and button panel to the frame
         frame.add(headerPanel, BorderLayout.NORTH);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Populate the table with orders
         populateOrderTable();
-
-        // Make the window visible
         frame.setVisible(true);
     }
 
@@ -107,7 +100,6 @@ public class StaffOrderSummary {
         button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 button.setBackground(button.getBackground().darker());
@@ -122,38 +114,30 @@ public class StaffOrderSummary {
     }
 
     private void populateOrderTable() {
-        List<Object[]> orders = DatabaseManager.getOrders(); // Fetch orders from the database
+        List<Object[]> orders = DatabaseManager.getOrders();
         for (Object[] order : orders) {
-            String status = (String) order[8]; // Assuming the status is the 9th column (index 8)
-            Object[] row = new Object[9]; // Adjusted for new columns
-            System.arraycopy(order, 0, row, 0, 8); // Copy all data from the order
+            String status = (String) order[8];
+            Object[] row = new Object[9];
+            System.arraycopy(order, 0, row, 0, 8);
             row[8] = status;
-            tableModel.addRow(row); // Add each order's information to the table
+            tableModel.addRow(row);
         }
 
-        // Default display of "Preparing" orders
         filterOrders("Preparing");
     }
 
     private void filterOrders(String status) {
-        // Clear the existing rows
         tableModel.setRowCount(0);
-
-        // Fetch and display orders with the selected status
-        List<Object[]> orders = DatabaseManager.getOrders(); // Fetch orders from the database
+        List<Object[]> orders = DatabaseManager.getOrders();
         for (Object[] order : orders) {
-            String orderStatus = (String) order[8]; // Assuming status is at index 8
+            String orderStatus = (String) order[8];
             if (orderStatus.equalsIgnoreCase(status)) {
-                Object[] row = new Object[9]; // Adjusted for new columns
-                System.arraycopy(order, 0, row, 0, 8); // Copy all data from the order
+                Object[] row = new Object[9];
+                System.arraycopy(order, 0, row, 0, 8);
                 row[8] = orderStatus;
-                tableModel.addRow(row); // Add each matching order's information to the table
+                tableModel.addRow(row);
             }
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(StaffOrderSummary::new);
     }
 
     private class StatusButtonRenderer extends JButton implements javax.swing.table.TableCellRenderer {
@@ -163,8 +147,8 @@ public class StaffOrderSummary {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            String status = (String) table.getValueAt(row, 8); // Get status from the 8th column (Status)
-            setText(status == null ? "" : getButtonLabel(status)); // Set button label based on status
+            String status = (String) table.getValueAt(row, 8);
+            setText(status == null ? "" : getButtonLabel(status));
             return this;
         }
 
@@ -200,8 +184,8 @@ public class StaffOrderSummary {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            String status = (String) table.getValueAt(row, 8); // Get the current status
-            label = getButtonLabel(status); // Set button label based on status
+            String status = (String) table.getValueAt(row, 8);
+            label = getButtonLabel(status);
             button.setText(label);
             clicked = true;
             this.row = row;
@@ -211,11 +195,11 @@ public class StaffOrderSummary {
         @Override
         public Object getCellEditorValue() {
             if (clicked) {
-                String newStatus = (String) tableModel.getValueAt(row, 8); // Get the current status
-                String orderID = tableModel.getValueAt(row, 0).toString(); // Get the Order ID
+                String newStatus = (String) tableModel.getValueAt(row, 8);
+                String orderID = tableModel.getValueAt(row, 0).toString();
 
                 if ("Preparing".equalsIgnoreCase(newStatus)) {
-                    DatabaseManager.updateOrderStatus(Integer.parseInt(orderID), "Ready",null);
+                    DatabaseManager.updateOrderStatus(Integer.parseInt(orderID), "Ready", null);
                     tableModel.setValueAt("Ready", row, 8);
                     JOptionPane.showMessageDialog(frame, "Order ID " + orderID + " marked as Ready.");
                 } else if ("Ready".equalsIgnoreCase(newStatus)) {
@@ -223,11 +207,9 @@ public class StaffOrderSummary {
                     tableModel.setValueAt("Complete", row, 8);
                     JOptionPane.showMessageDialog(frame, "Order ID " + orderID + " marked as Complete.");
                 }
-
-                // Reset the flag
                 clicked = false;
             }
-            return label; // Return the button label after the status change
+            return label;
         }
 
         private String getButtonLabel(String status) {

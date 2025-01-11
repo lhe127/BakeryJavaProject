@@ -8,58 +8,68 @@ import java.util.List;
 public class DonationSummary {
     private JFrame frame;
     private JLabel totalDonationLabel;
-    private JButton refreshButton;
     private JList<String> donationHistoryList;
     private DefaultListModel<String> listModel;
 
     public DonationSummary() {
-        // Initialize the frame
-        frame = new JFrame("Total Donation Summary");
+        // Initialize the frame without a title bar (undecorated)
+        frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 400); // Increased size for history display
-        frame.setLocationRelativeTo(null); // Center the window
+        frame.setSize(1000, 600);
+        frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
+//        frame.setUndecorated(true); // Remove window decoration (title bar)
 
-        // Title label with some custom font and background
+        // Title panel (minimal style)
         JPanel titlePanel = new JPanel();
-        titlePanel.setBackground(new Color(70, 130, 180)); // Steel blue
-        JLabel titleLabel = new JLabel("Total Donation");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titlePanel.setBackground(new Color(0, 122, 204));
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JLabel titleLabel = new JLabel("Total Donation Summary", JLabel.CENTER);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 30));
         titleLabel.setForeground(Color.WHITE);
         titlePanel.add(titleLabel);
 
-        // Donation amount label
-        totalDonationLabel = new JLabel("Loading...");
-        totalDonationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 36));
-        totalDonationLabel.setForeground(new Color(34, 139, 34)); // Green
-        totalDonationLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        // Donation amount label with modern look
+        totalDonationLabel = new JLabel("Loading...", SwingConstants.CENTER);
+        totalDonationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 50));
+        totalDonationLabel.setForeground(new Color(0, 128, 0));
+        totalDonationLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Refresh button to update total donation
-        refreshButton = new JButton("Refresh");
-        refreshButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        refreshButton.setBackground(new Color(255, 140, 0)); // Orange
-        refreshButton.setForeground(Color.WHITE);
-        refreshButton.setFocusPainted(false);
-        refreshButton.setPreferredSize(new Dimension(120, 40));
-        refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        refreshButton.addActionListener(e -> updateDonationHistory());
-
-        // Create a JList for displaying donation history
+        // Donation history panel
         listModel = new DefaultListModel<>();
         donationHistoryList = new JList<>(listModel);
-        donationHistoryList.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        donationHistoryList.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         donationHistoryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        donationHistoryList.setVisibleRowCount(10); // Show up to 10 items at a time
+        donationHistoryList.setBackground(new Color(245, 245, 245));
+        donationHistoryList.setSelectionBackground(new Color(0, 122, 204));
+        donationHistoryList.setSelectionForeground(Color.WHITE);
         JScrollPane historyScrollPane = new JScrollPane(donationHistoryList);
-        historyScrollPane.setPreferredSize(new Dimension(500, 150));
+        historyScrollPane.setPreferredSize(new Dimension(500, 250));
 
-        // Add components to the frame
+        // Left panel for total donation (50% width)
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BorderLayout());
+        leftPanel.setBackground(Color.WHITE);
+        leftPanel.add(totalDonationLabel, BorderLayout.CENTER);
+
+        // Right panel for donation history (50% width)
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BorderLayout());
+        rightPanel.setBackground(new Color(245, 245, 245));
+        rightPanel.add(historyScrollPane, BorderLayout.CENTER);
+
+        // Main panel with flexible layout
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new GridLayout(1, 2, 10, 0));
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.add(leftPanel);
+        mainPanel.add(rightPanel);
+
+        // Add title panel on top
         frame.add(titlePanel, BorderLayout.NORTH);
-        frame.add(totalDonationLabel, BorderLayout.CENTER);
-        frame.add(refreshButton, BorderLayout.SOUTH);
-        frame.add(historyScrollPane, BorderLayout.EAST); // Add the history scroll pane to the frame
+        frame.add(mainPanel, BorderLayout.CENTER);
 
-        // Fetch and display the initial donation amount and history
+        // Fetch and display initial donation data
         updateDonationHistory();
 
         // Make the window visible
@@ -67,20 +77,25 @@ public class DonationSummary {
     }
 
     private void updateDonationHistory() {
-        // Update the total donation
-        double totalDonation = DatabaseManager.getTotalDonationFromOrders();
-        DecimalFormat formatter = new DecimalFormat("#,###.00"); // Format the donation amount
-        totalDonationLabel.setText("RM" + formatter.format(totalDonation)); // Display donation amount
+        try {
+            // Simulate fetching donation data
+            double totalDonation = DatabaseManager.getTotalDonationFromOrders();
+            DecimalFormat formatter = new DecimalFormat("#,###.00");
+            totalDonationLabel.setText("RM" + formatter.format(totalDonation));
 
-        // Fetch and display the donation history
-        List<String> history = DatabaseManager.getDonationHistoryFromOrders();
-        listModel.clear(); // Clear the previous history
-        for (String donation : history) {
-            listModel.addElement(donation); // Add new history to the list
+            List<String> history = DatabaseManager.getDonationHistoryFromOrders();
+            listModel.clear();
+            for (String donation : history) {
+                listModel.addElement(donation);
+            }
+        } catch (Exception e) {
+            totalDonationLabel.setText("Error loading data");
+            listModel.clear();
+            listModel.addElement("No data available");
         }
     }
 
-    public static void main(String[] args) {
+    public static void createAndShowGUI() {
         SwingUtilities.invokeLater(DonationSummary::new);
     }
 }

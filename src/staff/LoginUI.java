@@ -86,7 +86,7 @@ public class LoginUI {
             if (isValidUser(username, password)) {
                 JOptionPane.showMessageDialog(frame, "Login Successful!");
                 frame.dispose(); // Close the login screen
-                CakeManagementUI.createAndShowGUI(); // Show the cake management UI
+                showMainMenu(); // Show the main menu UI
             } else {
                 JOptionPane.showMessageDialog(frame, "Invalid username or password.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -101,5 +101,98 @@ public class LoginUI {
     private static boolean isValidUser(String username, char[] password) {
         // For demonstration purposes, you can use hardcoded values or validate from a database
         return "admin".equals(username) && "password".equals(new String(password));
+    }
+
+    // Redesigned method to display the main menu after login
+    private static void showMainMenu() {
+        JFrame mainMenuFrame = new JFrame("Staff Dashboard");
+        mainMenuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainMenuFrame.setSize(500, 350);
+        mainMenuFrame.setLayout(new GridBagLayout());
+
+        // Background Panel
+        JPanel backgroundPanel = new JPanel();
+        backgroundPanel.setBackground(new Color(255, 255, 255)); // White background
+        backgroundPanel.setLayout(new GridBagLayout());
+
+        // Font Customization
+        Font buttonFont = new Font("Arial", Font.BOLD, 16);
+
+        // GridBagConstraints for positioning components
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(15, 15, 15, 15); // Padding around components
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+
+        // Title Label
+        JLabel welcomeLabel = new JLabel("Welcome to the Staff Dashboard!");
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        welcomeLabel.setForeground(new Color(30, 144, 255)); // Blue color for title
+        backgroundPanel.add(welcomeLabel, gbc);
+
+        // Cake Management Button
+        JButton cakeManagementButton = createButton("Cake Management");
+        gbc.gridy = 1;
+        backgroundPanel.add(cakeManagementButton, gbc);
+
+        // Donation Summary Button
+        JButton donationSummaryButton = createButton("Donation Summary");
+        gbc.gridy = 2;
+        backgroundPanel.add(donationSummaryButton, gbc);
+
+        // Order Summary Button
+        JButton orderSummaryButton = createButton("Order Summary");
+        gbc.gridy = 3;
+        backgroundPanel.add(orderSummaryButton, gbc);
+
+        // Action listeners for buttons
+        cakeManagementButton.addActionListener(e -> {
+            CakeManagementUI.createAndShowGUI();
+            mainMenuFrame.dispose();
+        });
+
+        donationSummaryButton.addActionListener(e -> {
+            DonationSummary.createAndShowGUI();
+            mainMenuFrame.dispose();
+        });
+
+        orderSummaryButton.addActionListener(e -> {
+            StaffOrderSummary ordersummary = new StaffOrderSummary();
+            ordersummary.createAndShowGUI();
+            mainMenuFrame.dispose();
+        });
+
+        // Adding the background panel to the frame
+        mainMenuFrame.add(backgroundPanel);
+
+        // Make the frame visible and center it
+        mainMenuFrame.setLocationRelativeTo(null);
+        mainMenuFrame.setVisible(true);
+    }
+
+    // Helper method to create attractive buttons
+    private static JButton createButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 16));
+        button.setBackground(new Color(30, 144, 255)); // Blue button color
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setPreferredSize(new Dimension(250, 50)); // Button size
+        button.setFocusable(false);
+
+        // Adding hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(70, 130, 180)); // Darker blue on hover
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(30, 144, 255)); // Original blue
+            }
+        });
+
+        return button;
     }
 }
