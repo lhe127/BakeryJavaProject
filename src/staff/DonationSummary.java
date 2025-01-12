@@ -58,7 +58,7 @@ public class DonationSummary {
         rightPanel.setBackground(new Color(245, 245, 245));
         rightPanel.add(historyScrollPane, BorderLayout.CENTER);
 
-        // Main panel with flexible layout
+        // bakery.Main panel with flexible layout
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new GridLayout(1, 2, 10, 0));
         mainPanel.setBackground(Color.WHITE);
