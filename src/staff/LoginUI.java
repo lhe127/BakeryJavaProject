@@ -4,11 +4,28 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+/**
+ * The {@code LoginUI} class represents the user interface for the login screen
+ * and main menu of the staff dashboard application. It provides an intuitive
+ * login system and navigation to other features like cake management, donation
+ * summary, and order summary.
+ */
 public class LoginUI {
+
+    /**
+     * The main entry point of the application.
+     * Launches the login screen on the Event Dispatch Thread (EDT).
+     *
+     * @param args the command-line arguments (not used)
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(LoginUI::createLoginScreen);
     }
 
+    /**
+     * Creates and displays the login screen with input fields for username and password.
+     * Includes a "Show Password" option and a login button with validation.
+     */
     private static void createLoginScreen() {
         JFrame frame = new JFrame("Login");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -97,13 +114,22 @@ public class LoginUI {
         frame.setVisible(true);
     }
 
-    // Dummy method to simulate login validation
+    /**
+     * Validates the login credentials entered by the user.
+     *
+     * @param username the username entered by the user
+     * @param password the password entered by the user
+     * @return {@code true} if the username and password are valid, otherwise {@code false}
+     */
     private static boolean isValidUser(String username, char[] password) {
         // For demonstration purposes, you can use hardcoded values or validate from a database
         return "admin".equals(username) && "password".equals(new String(password));
     }
 
-    // Redesigned method to display the main menu after login
+    /**
+     * Displays the main menu UI after successful login.
+     * Provides options for navigating to Cake Management, Donation Summary, and Order Summary.
+     */
     private static void showMainMenu() {
         JFrame mainMenuFrame = new JFrame("Staff Dashboard");
         mainMenuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -171,7 +197,12 @@ public class LoginUI {
         mainMenuFrame.setVisible(true);
     }
 
-    // Helper method to create attractive buttons
+    /**
+     * Creates a styled button for the main menu with hover effects and custom dimensions.
+     *
+     * @param text the label to be displayed on the button
+     * @return a styled {@link JButton} instance
+     */
     private static JButton createButton(String text) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 16));

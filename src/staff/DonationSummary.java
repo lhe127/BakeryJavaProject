@@ -5,12 +5,21 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
+/**
+ * The {@code DonationSummary} class represents a GUI component that displays
+ * the total donation summary and donation history. It fetches donation data
+ * from the database and provides a modern, interactive interface for users.
+ */
 public class DonationSummary {
     private JFrame frame;
     private JLabel totalDonationLabel;
     private JList<String> donationHistoryList;
     private DefaultListModel<String> listModel;
 
+    /**
+     * Constructs a new {@code DonationSummary} instance.
+     * Initializes the GUI components, sets up the layout, and displays the donation summary and history.
+     */
     public DonationSummary() {
         // Initialize the frame without a title bar (undecorated)
         frame = new JFrame();
@@ -76,6 +85,11 @@ public class DonationSummary {
         frame.setVisible(true);
     }
 
+    /**
+     * Updates the donation summary and history displayed in the GUI.
+     * Fetches data from the database and formats it for display.
+     * In case of an error, it displays an error message in the GUI.
+     */
     private void updateDonationHistory() {
         try {
             // Simulate fetching donation data
@@ -95,6 +109,10 @@ public class DonationSummary {
         }
     }
 
+    /**
+     * Creates and displays the GUI for the donation summary.
+     * This method is executed on the Event Dispatch Thread (EDT) to ensure thread safety.
+     */
     public static void createAndShowGUI() {
         SwingUtilities.invokeLater(DonationSummary::new);
     }

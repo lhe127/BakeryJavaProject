@@ -10,14 +10,32 @@ import java.awt.event.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
+/**
+ * The Bakery class represents the main interface for the SUC Bakery application.
+ * It allows users to view a welcome screen, place orders, and track their orders.
+ * The class also handles the GUI components and event listeners for user interactions.
+ */
 public class Bakery {
+    /**
+     * List of JLabel components representing counters.
+     */
     ArrayList<JLabel> counterLabels = new ArrayList<>();
+
+    /**
+     * A JLabel component for displaying counter information.
+     */
     JLabel counterLabel;
 
+    /**
+     * Constructs the Bakery application interface.
+     * Sets up the main frame and panels for the welcome screen, logo display,
+     * and navigation buttons (e.g., order and track order functionalities).
+     */
     public Bakery(){
         JFrame homeFrame = new JFrame("SUC Bakery");
         homeFrame.setLayout(new BorderLayout());
 
+        // Welcome Panel
         JPanel welcomePanel = new JPanel();
         welcomePanel.setPreferredSize(new Dimension(1100,150));
         welcomePanel.setBackground(new Color(255, 246, 243));
@@ -26,6 +44,7 @@ public class Bakery {
         welcomePanel.add(label1);
         label1.setFont(new Font("Dialog", Font.BOLD, 50));
 
+        // Logo Panel
         JPanel logoPanel = new JPanel();
         logoPanel.setPreferredSize(new Dimension(1100,250));
 
@@ -33,7 +52,7 @@ public class Bakery {
         logoPanel.add(image1);
         logoPanel.setBackground(new Color(255, 246, 243));
 
-        // Add this code inside the Bakery constructor, in the buttonPanel section
+        // Button Panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.setPreferredSize(new Dimension(400, 150));
         buttonPanel.setBackground(new Color(255, 246, 243));
@@ -52,14 +71,20 @@ public class Bakery {
         trackButton.setFont(new Font("SansSerif", Font.BOLD, 20));
         trackButton.setForeground(new Color(42,178,123));
 
-// Add the track order button functionality
+        // Add functionality to the "Track Order" button
         trackButton.addActionListener(new ActionListener() {
+
+            /**
+             * Displays the "Track Order" window when the "Track Order" button is clicked.
+             *
+             * @param e the action event triggered by clicking the "Track Order" button
+             */
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFrame trackFrame = new JFrame("Track Order");
                 trackFrame.setLayout(new BorderLayout());
 
-                // Panel for input
+                // Input Panel
                 JPanel inputPanel = new JPanel(new GridLayout(3, 2, 10, 10));
                 inputPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -75,22 +100,41 @@ public class Bakery {
                 inputPanel.add(searchButton);
 
                 // Panel for displaying order details
+                /**
+                 * Creates a panel to display order details retrieved from the database.
+                 * Configures the layout and spacing of the panel.
+                 */
                 JPanel orderDetailsPanel = new JPanel();
                 orderDetailsPanel.setLayout(new BoxLayout(orderDetailsPanel, BoxLayout.Y_AXIS));
                 orderDetailsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-                // Add components to frame
+                // Add components to the frame
+                /**
+                 * Adds the input panel and the order details panel to the frame.
+                 * Positions the input panel at the top (NORTH) and the order details
+                 * panel inside a scrollable pane at the center (CENTER) of the frame.
+                 */
                 trackFrame.add(inputPanel, BorderLayout.NORTH);
                 trackFrame.add(new JScrollPane(orderDetailsPanel), BorderLayout.CENTER);
 
+                // Search button functionality
                 searchButton.addActionListener(new ActionListener() {
+                    /**
+                     * Handles the action when the "Search" button is clicked.
+                     * Validates the user's input, retrieves order details from the database,
+                     * and updates the order details panel with the retrieved information.
+                     *
+                     * @param e the action event triggered by clicking the "Search" button
+                     */
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         orderDetailsPanel.removeAll();
 
+                        // Retrieve and trim user inputs
                         String name = nameField.getText().trim();
                         String phone = phoneField.getText().trim();
 
+                        // Validate inputs
                         if (name.isEmpty() || phone.isEmpty()) {
                             JOptionPane.showMessageDialog(trackFrame,
                                     "Please enter both name and phone number",
@@ -99,17 +143,29 @@ public class Bakery {
                             return;
                         }
 
+                        // Search and display order status
                         displayOrderStatus(name, phone, orderDetailsPanel);
                         orderDetailsPanel.revalidate();
                         orderDetailsPanel.repaint();
                     }
                 });
 
+                // Frame properties
+                /**
+                 * Configures the "Track Order" frame size, location, and visibility.
+                 */
                 trackFrame.setSize(600, 400);
                 trackFrame.setLocationRelativeTo(null);
                 trackFrame.setVisible(true);
             }
 
+            /**
+             * Retrieves and displays the order status based on the customer's name and phone number.
+             *
+             * @param customerName the name of the customer
+             * @param phone the phone number of the customer
+             * @param panel the panel where order details will be displayed
+             */
             private void displayOrderStatus(String customerName, String phone, JPanel panel) {
                 try (Connection conn = DatabaseManager.getConnection()) {
                     String query = """
@@ -167,12 +223,15 @@ public class Bakery {
                             detailsPanel.add(createDetailLabel("Address: " + address, detailFont));
                             detailsPanel.add(createDetailLabel("Items:", detailFont));
 
-                            // Split items and add each on a new line
+                            /**
+                             * Splits the list of items from the order and displays each on a new line in the details panel.
+                             */
                             String[] itemsList = items.split(",");
                             for (String item : itemsList) {
                                 detailsPanel.add(createDetailLabel("   • " + item.trim(), detailFont));
                             }
 
+                            // Add total and donation amounts to the details panel
                             detailsPanel.add(createDetailLabel(String.format("Total Amount: RM %.2f", totalAmount), detailFont));
                             detailsPanel.add(createDetailLabel(String.format("Donation Amount: RM %.2f", donationAmount), detailFont));
 
@@ -203,10 +262,14 @@ public class Bakery {
             }
         });
 
+        // Configure the home frame layout
         homeFrame.add(welcomePanel, BorderLayout.NORTH);
         homeFrame.add(logoPanel, BorderLayout.CENTER);
         homeFrame.add(buttonPanel, BorderLayout.SOUTH);
 
+        /**
+         * Listener for the "Menu" button that navigates to the SUC Bakery interface.
+         */
         homeFrame.setSize(1100, 750);
         homeFrame.setResizable(true);
         homeFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -216,25 +279,31 @@ public class Bakery {
         menuButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Close the home frame
                 homeFrame.dispose();
 
+                // Create the main frame for the bakery shop
                 JFrame frame = new JFrame("SUC Bakery");
                 BakeryShop bk = new BakeryShop();
 
+                // Initialize the panels for layout
                 JPanel mainPanel = new JPanel();
                 JPanel receiptPanel = new JPanel(new BorderLayout());
                 JPanel receiptContentPanel = new JPanel(new BorderLayout());
                 JPanel checkoutPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
+                // Configure the receipt and checkout panels
                 receiptPanel.setBorder(new LineBorder(Color.BLACK, 2));
                 receiptPanel.setBackground(new Color(255, 246, 243));
                 receiptContentPanel.setBackground(new Color(255, 246, 243));
                 checkoutPanel.setBackground(new Color(255, 246, 243));
                 checkoutPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
+                // Configure the main panel for product layout
                 mainPanel.setPreferredSize(new Dimension(700, 750));
                 mainPanel.setLayout(new GridLayout(3,3, 45, 45));
 
+                // Create and configure the checkout button
                 JButton checkoutButton = new JButton("Checkout");
                 checkoutButton.setPreferredSize(new Dimension(150, 70));
                 checkoutButton.setFont(new Font("SansSerif", Font.BOLD, 20));
@@ -244,15 +313,18 @@ public class Bakery {
                 checkoutButton.setForeground(new Color(245,248,250,255));
                 checkoutButton.setFocusPainted(false);
 
+                // Add the checkout button to the checkout panel
                 checkoutPanel.add(checkoutButton);
                 receiptPanel.add(receiptContentPanel, BorderLayout.CENTER);
                 receiptPanel.add(checkoutPanel, BorderLayout.SOUTH);
 
+                // Iterate through the product list and display each product
                 for (Products product : bk.products) {
                     JPanel productPanel = new JPanel();
                     productPanel.setBackground(new Color(255, 246, 243));
                     productPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 20));
 
+                    // Configure the product image
                     JLabel imageLabel = new JLabel();
                     ImageIcon imageIcon = new ImageIcon(product.getImage());
                     Image image = imageIcon.getImage();
@@ -260,24 +332,37 @@ public class Bakery {
                     imageIcon = new ImageIcon(scaledImg);
                     imageLabel.setIcon(imageIcon);
 
+                    // Configure the product name label
                     JLabel productNameLabel = new JLabel(product.getProductName());
                     productNameLabel.setPreferredSize(new Dimension(150, 40));  // Set the width to control truncation
                     productNameLabel.setFont(new Font("Arial", Font.BOLD, 18));
                     productNameLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-                    // Truncate the text with ellipsis if the text is too long
+                    /**
+                     * Truncates product names that exceed 20 characters and appends ellipsis.
+                     * Sets a tooltip to display the full product name.
+                     */
                     String displayText = product.getProductName().length() > 20 ? product.getProductName().substring(0, 17) + "..." : product.getProductName();
                     productNameLabel.setText(displayText);
 
                     // Set tooltip to show the full product name
                     productNameLabel.setToolTipText(product.getProductName());
+                    /**
+                     * Displays the product's price in RM format.
+                     */
                     JLabel priceLabel = new JLabel("RM " + Double.toString(product.getPrice()));
 
-                    // Add a stock label
+                    /**
+                     * Adds a stock label to show available product stock.
+                     * The stock value is displayed below the product's price.
+                     */
                     JLabel stockLabel = new JLabel("Stock: " + product.getStock());
                     stockLabel.setFont(new Font("Arial", Font.PLAIN, 14));
                     stockLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
+                    /**
+                     * Organizes product details (name, price, and stock) into a detail panel.
+                     */
                     JPanel detailPanel = new JPanel();
                     detailPanel.add(productNameLabel);
                     detailPanel.add(priceLabel);
@@ -285,6 +370,10 @@ public class Bakery {
                     detailPanel.setLayout(new GridLayout(3, 1));  // Ensure stock label fits without breaking layout
                     detailPanel.setBackground(new Color(255, 246, 243));
 
+                    /**
+                     * Creates a counter panel for adjusting product quantities.
+                     * Contains buttons for incrementing and decrementing quantities and a label to display the current count.
+                     */
                     JPanel counterPanel = new JPanel();
 
                     JButton counterAddBtn = new JButton("+");
@@ -294,6 +383,9 @@ public class Bakery {
 
                     counterLabels.add(counterLabel);
 
+                    /**
+                     * Configures the "+" and "-" buttons for quantity adjustment.
+                     */
                     counterAddBtn.setBackground(new Color(42,178,123,255));
                     counterAddBtn.setBorderPainted(false);
                     counterAddBtn.setForeground(new Color(245,248,250,255));
@@ -306,6 +398,9 @@ public class Bakery {
                     counterSubtractBtn.setOpaque(true);
                     counterSubtractBtn.setFocusPainted(false);
 
+                    /**
+                     * Configures the counter panel layout and adds increment/decrement buttons with the counter label.
+                     */
                     counterPanel.setBackground(new Color(245,248,250,255));
                     counterPanel.setPreferredSize(new Dimension(150, 30));
                     counterPanel.setLayout(new GridLayout(1, 3, 5, 5));
@@ -313,19 +408,35 @@ public class Bakery {
                     counterPanel.add(counterLabel);
                     counterPanel.add(counterAddBtn);
 
+                    /**
+                     * Adds the product image, detail panel, and counter panel to the product panel.
+                     */
                     productPanel.add(imageLabel);
                     productPanel.add(detailPanel);
                     productPanel.add(counterPanel);
 
+                    /**
+                     * Configures the counter label's font and alignment.
+                     */
                     counterLabel.setHorizontalAlignment(SwingConstants.CENTER);
                     counterLabel.setFont(new Font("Arial", Font.BOLD, 20));
 
+                    /**
+                     * Configures the product name label's font and alignment.
+                     */
                     productNameLabel.setHorizontalAlignment(SwingConstants.CENTER);
                     productNameLabel.setFont(new Font("Arial", Font.BOLD, 18));
 
+                    /**
+                     * Configures the price label's font and alignment.
+                     */
                     priceLabel.setHorizontalAlignment(SwingConstants.CENTER);
                     priceLabel.setFont(new Font("Arial", Font.BOLD, 22));
 
+                    /**
+                     * Increments the product quantity when the "+" button is clicked,
+                     * ensuring the count does not exceed available stock.
+                     */
                     counterAddBtn.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -338,6 +449,10 @@ public class Bakery {
                         }
                     });
 
+                    /**
+                     * Increments the product quantity when the "+" button is clicked,
+                     * ensuring the count does not exceed available stock.
+                     */
                     counterSubtractBtn.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -350,9 +465,15 @@ public class Bakery {
                         }
                     });
 
+                    /**
+                     * Adds the configured product panel to the main panel.
+                     */
                     mainPanel.add(productPanel);
                 }
 
+                /**
+                 * Creates and configures a "Confirm" button for confirming the order.
+                 */
                 JButton confirmButton = new JButton("Confirm");
                 confirmButton.setPreferredSize(new Dimension(150, 70));
                 confirmButton.setFont(new Font("SansSerif", Font.BOLD, 20));
@@ -362,6 +483,9 @@ public class Bakery {
                 confirmButton.setForeground(new Color(245,248,250,255));
                 confirmButton.setFocusPainted(false);
 
+                /**
+                 * Creates and configures a "Clear Order" button for resetting the order.
+                 */
                 JButton clearButton = new JButton("Clear Order");
                 clearButton.setPreferredSize(new Dimension(150,70));
                 clearButton.setFont(new Font("SansSerif", Font.BOLD, 20));
@@ -371,11 +495,18 @@ public class Bakery {
                 clearButton.setForeground(new Color(245,248,250,255));
                 clearButton.setFocusPainted(false);
 
+                /**
+                 * Adds the confirm and clear buttons to the button panel.
+                 */
                 JPanel btnPanel = new JPanel();
                 btnPanel.setPreferredSize(new Dimension(150,60));
                 btnPanel.add(confirmButton);
                 btnPanel.add(clearButton);
 
+                /**
+                 * Handles the creation of the bottom button panel (`btnPanel`) and its actions, including receipt generation,
+                 * order clearing, and donation handling.
+                 */
                 btnPanel.setBorder(BorderFactory.createEmptyBorder(100, 0, 0, 0));
                 btnPanel.setBackground(Color.WHITE);
                 mainPanel.setBackground(Color.WHITE);
@@ -385,6 +516,10 @@ public class Bakery {
 
                 checkoutButton.setVisible(false);
 
+                /**
+                 * Generates the receipt when the "Confirm" button is clicked.
+                 * Calculates the total cost of the products and displays the receipt in a table format.
+                 */
                 confirmButton.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e){
                         JLabel receiptLabel = new JLabel("Receipt");
@@ -431,7 +566,9 @@ public class Bakery {
                     }
                 });
 
-                // Inside clearButton's ActionListener, add:
+                /**
+                 * Clears all products' counters and resets the receipt content when the "Clear Order" button is clicked.
+                 */
                 clearButton.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e){
                         for (int i = 0; i < bk.products.size(); i++) {
@@ -445,6 +582,12 @@ public class Bakery {
                     }
                 });
 
+                /**
+                 * Opens a donation frame and handles donation selection or cancellation when the "Checkout" button is clicked.
+                 * Users can choose predefined amounts or enter a custom donation amount.
+                 *
+                 * @param e ActionEvent triggered when the "Checkout" button is clicked.
+                 */
                 checkoutButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -487,7 +630,7 @@ public class Bakery {
                         donationFrame.setLocationRelativeTo(null);
                         donationFrame.setVisible(true);
 
-                        // 变量存储捐赠金额
+                        // Variable to store donation amount
                         final double[] donationAmount = {0.0};
 
                         ActionListener donationListener = new ActionListener() {
@@ -520,7 +663,7 @@ public class Bakery {
                             }
                         };
 
-                        // 为所有按钮绑定事件监听器
+                        // Bind donationListener to buttons
                         button1.addActionListener(donationListener);
                         button2.addActionListener(donationListener);
                         button5.addActionListener(donationListener);
@@ -535,7 +678,14 @@ public class Bakery {
                         });
                     }
 
+                    /**
+                     * Displays the donation dialog, processes the donation amount, and finalizes the order.
+                     *
+                     * @param order The current {@link Order} object representing the customer's order.
+                     * @param donationAmount The amount donated by the customer.
+                     */
                     private void finalizeOrder(Order order, double donationAmount) {
+                        // Code for collecting customer information, processing delivery type, and proceeding to order summary
                         // Create a form to input additional information
                         JFrame infoFrame = new JFrame("Customer Information");
                         infoFrame.setLayout(new BorderLayout());
@@ -639,11 +789,24 @@ public class Bakery {
                         });
                     }
 
+                    /**
+                     * Saves the completed order to the database, including customer details, donation, and order items.
+                     *
+                     * @param order The {@link Order} object containing all order details and items.
+                     * @param customerName The name of the customer placing the order.
+                     * @param customerEmail The email address of the customer.
+                     * @param customerPhone The phone number of the customer.
+                     * @param deliveryAddress The address to which the order is to be delivered.
+                     * @param deliveryType The type of delivery selected (e.g., Standard, Express, Pickup).
+                     * @param donationAmount The amount donated by the customer.
+                     */
                     private void saveOrderToDatabase(Order order, String customerName, String customerEmail, String customerPhone,
                                                      String deliveryAddress, String deliveryType, double donationAmount) {
                         try (Connection connection = DatabaseManager.getConnection()) {
 
-                            // Insert customer data
+                            // Save customer data to the database
+                            // Save order details to the database
+                            // Save order items to the database
                             String customerQuery = "INSERT INTO Customer (name, email, phone) VALUES (?, ?, ?)";
                             try (PreparedStatement customerStmt = connection.prepareStatement(customerQuery, Statement.RETURN_GENERATED_KEYS)) {
                                 customerStmt.setString(1, customerName);
@@ -654,7 +817,7 @@ public class Bakery {
                                 customerRs.next();
                                 int customerId = customerRs.getInt(1);
 
-                                // Insert order data
+                                // Insert order data into the database
                                 String orderQuery = "INSERT INTO `Order` (customer_id, donation_amount, total_amount, delivery_address, delivery_type) " +
                                         "VALUES (?, ?, ?, ?, ?)";
                                 try (PreparedStatement orderStmt = connection.prepareStatement(orderQuery, Statement.RETURN_GENERATED_KEYS)) {
@@ -668,7 +831,7 @@ public class Bakery {
                                     orderRs.next();
                                     int orderId = orderRs.getInt(1);
 
-                                    // Insert order items (now using Product ID instead of Cake ID)
+                                    // Insert order items (now using Product ID instead of Cake ID) into the database
                                     String itemQuery = "INSERT INTO orderitems (order_id, cake_id, quantity, total_price) VALUES (?, ?, ?, ?)";
                                     try (PreparedStatement itemStmt = connection.prepareStatement(itemQuery)) {
                                         for (OrderItem item : order.getItems()) {
@@ -681,7 +844,7 @@ public class Bakery {
                                         itemStmt.executeBatch();
                                     }
 
-                                    // Insert donation data
+                                    // Insert donation data into the database
                                     String donationQuery = "INSERT INTO donation (order_id, amount) VALUES (?, ?)";
                                     try (PreparedStatement donationStmt = connection.prepareStatement(donationQuery)) {
                                         donationStmt.setInt(1, orderId);
@@ -695,9 +858,20 @@ public class Bakery {
                         }
                     }
 
+                    /**
+                     * Displays the order summary to the customer in a separate JFrame and handles payment confirmation.
+                     *
+                     * @param order The {@link Order} object containing the customer's order details.
+                     * @param customerName The name of the customer.
+                     * @param customerEmail The email address of the customer.
+                     * @param customerPhone The phone number of the customer.
+                     * @param deliveryAddress The delivery address for the order.
+                     * @param deliveryType The type of delivery selected (Standard, Express, Pickup).
+                     * @param donationAmount The amount donated by the customer.
+                     */
                     private void displayOrderSummary(Order order, String customerName, String customerEmail, String customerPhone,
                                                      String deliveryAddress, String deliveryType, double donationAmount) {
-                        // Display the order summary in a separate JFrame
+                        // Display order summary and payment confirmation in a separate JFrame
                         JFrame summaryFrame = new JFrame("Order Summary");
                         summaryFrame.setLayout(new BorderLayout());
 
@@ -738,7 +912,7 @@ public class Bakery {
                                 // Save the order to the database
                                 saveOrderToDatabase(order, customerName, customerEmail, customerPhone, deliveryAddress, deliveryType, donationAmount);
 
-                                // Reduce stock based on the quantity of items ordered
+                                // Update stock based on the quantity of ordered items
                                 try (Connection connection = DatabaseManager.getConnection()) {
                                     String updateStockQuery = "UPDATE cakes SET stock = stock - ? WHERE id = ?";
                                     try (PreparedStatement stmt = connection.prepareStatement(updateStockQuery)) {

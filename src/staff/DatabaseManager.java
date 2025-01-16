@@ -7,17 +7,35 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility class for managing database interactions related to the bakery system.
+ * Provides methods to handle CRUD operations for cakes.
+ */
 public class DatabaseManager {
     private static final String URL = "jdbc:mysql://localhost:3306/sucbakery"; // Replace with your DB details
     private static final String USER = "root";  // Replace with your database username
     private static final String PASSWORD = "58961234";  // Replace with your database password
 
-    // Establish the connection to the database
+    /**
+     * Establishes a connection to the database.
+     *
+     * @return a {@link Connection} object for the database.
+     * @throws SQLException if a database access error occurs.
+     */
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 
-    // Insert cake into the database
+    /**
+     * Inserts a new cake into the database.
+     * Ensures that the total number of cakes does not exceed the maximum limit (6).
+     *
+     * @param name      the name of the cake.
+     * @param price     the price of the cake.
+     * @param stock     the stock quantity of the cake.
+     * @param imagePath the file path to the cake's image.
+     * @return {@code true} if the cake was inserted successfully, {@code false} otherwise.
+     */
     public static boolean insertCake(String name, double price, int stock, String imagePath) {
         if (getCakesCount() >= 6) {
             System.out.println("Cannot insert more than 6 cakes.");
@@ -41,7 +59,12 @@ public class DatabaseManager {
         }
     }
 
-    // Retrieve existing cakes
+    /**
+     * Retrieves all cakes from the database.
+     *
+     * @return a list of cakes, where each cake is represented as an {@code Object[]} containing
+     *         the name, price, stock, and image path.
+     */
     public static List<Object[]> getCakes() {
         List<Object[]> cakes = new ArrayList<>();
         String sql = "SELECT name, price, stock, imagePath FROM cakes";
@@ -67,7 +90,11 @@ public class DatabaseManager {
         return cakes;
     }
 
-    // Get the total number of cakes in the database
+    /**
+     * Gets the total count of cakes in the database.
+     *
+     * @return the total number of cakes, or {@code 0} if an error occurs.
+     */
     public static int getCakesCount() {
         String sql = "SELECT COUNT(*) AS total FROM cakes";
 
@@ -85,7 +112,16 @@ public class DatabaseManager {
         return 0; // Default to 0 if there's an error
     }
 
-    // Update cake details
+    /**
+     * Updates the details of an existing cake in the database.
+     *
+     * @param oldName      the current name of the cake to be updated.
+     * @param newName      the new name of the cake.
+     * @param newPrice     the new price of the cake.
+     * @param newStock     the new stock quantity of the cake.
+     * @param newImagePath the new image path of the cake.
+     * @return {@code true} if the cake was updated successfully, {@code false} otherwise.
+     */
     public static boolean updateCake(String oldName, String newName, double newPrice, int newStock, String newImagePath) {
         String sql = "UPDATE cakes SET name = ?, price = ?, stock = ?, imagePath = ? WHERE name = ?";
         try (Connection conn = getConnection();
@@ -104,7 +140,13 @@ public class DatabaseManager {
             return false; // Return false if update failed
         }
     }
-    // Delete cake from the database by name
+
+    /**
+     * Deletes a cake from the database based on its name.
+     *
+     * @param name the name of the cake to be deleted.
+     * @return {@code true} if the cake was deleted successfully, {@code false} otherwise.
+     */
     public static boolean deleteCake(String name) {
         String sql = "DELETE FROM cakes WHERE name = ?";
 
@@ -120,6 +162,23 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Retrieves a list of orders with detailed information, including customer name, cake details, total items, and more.
+     * Orders are sorted by completion time in descending order.
+     *
+     * @return a list of orders, where each order is represented as an {@code Object[]} containing:
+     *         <ul>
+     *             <li>Order ID (Integer)</li>
+     *             <li>Customer Name (String)</li>
+     *             <li>Cake Details (String) - A concatenated string of cake names and quantities</li>
+     *             <li>Total Items (Integer)</li>
+     *             <li>Total Price (Double)</li>
+     *             <li>Donation Amount (Double)</li>
+     *             <li>Delivery Address (String)</li>
+     *             <li>Completion Time (Timestamp)</li>
+     *             <li>Order Status (String)</li>
+     *         </ul>
+     */
     public static List<Object[]> getOrders() {
         List<Object[]> orders = new ArrayList<>();
         // Modify the query to order by 'order_id' in descending order
@@ -159,6 +218,13 @@ public class DatabaseManager {
         return orders;
     }
 
+    /**
+     * Updates the status and completion time of a specific order in the database.
+     *
+     * @param orderId       the ID of the order to be updated.
+     * @param status        the new status of the order (e.g., "Completed", "Pending").
+     * @param completionTime the completion time to be set for the order.
+     */
     public static void updateOrderStatus(int orderId, String status, java.sql.Timestamp completionTime) {
         String sql = "UPDATE `order` SET status = ?, completion_time = ? WHERE id = ?";
 
@@ -175,6 +241,14 @@ public class DatabaseManager {
             e.printStackTrace();  // Log any SQL exceptions
         }
     }
+
+    /**
+     * Retrieves the donation history from the orders, including customer names and donation amounts.
+     * Only orders with donation amounts greater than zero are included.
+     *
+     * @return a list of formatted strings, where each string provides the customer's name and their donation amount.
+     *         Example: "John Doe donated RM50.00".
+     */
     public static List<String> getDonationHistoryFromOrders() {
         List<String> historyList = new ArrayList<>();
         // SQL query to join `order` with `customer` and fetch the necessary data
@@ -201,6 +275,12 @@ public class DatabaseManager {
         return historyList;
     }
 
+    /**
+     * Calculates the total donation amount from all orders.
+     * Only orders with donation amounts greater than zero are included in the calculation.
+     *
+     * @return the total donation amount as a {@code double}.
+     */
     public static double getTotalDonationFromOrders() {
         double totalDonation = 0;
         // SQL query to calculate the total donation from the `order` table

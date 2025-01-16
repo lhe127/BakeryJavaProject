@@ -8,12 +8,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
+/**
+ * A GUI application for managing and displaying a summary of staff orders.
+ * The application displays orders in a table with the ability to filter orders by status and update order statuses.
+ */
 public class StaffOrderSummary {
     private JFrame frame;
     private JTable orderTable;
     private DefaultTableModel tableModel;
 
-    // Constructor no longer creates JFrame
+    /**
+     * Constructs an instance of {@code StaffOrderSummary}.
+     * Initializes the table model for displaying order data.
+     */
     public StaffOrderSummary() {
         // Initialize components but do not create the JFrame yet
         tableModel = new DefaultTableModel(new String[] {
@@ -21,6 +28,10 @@ public class StaffOrderSummary {
         }, 0);
     }
 
+    /**
+     * Creates and displays the GUI for the staff order summary.
+     * Initializes the frame, table, and buttons, and populates the order table with data.
+     */
     public void createAndShowGUI() {
         // Initialize the frame here (it won't be initialized in constructor)
         frame = new JFrame("Order Summary");
@@ -90,6 +101,13 @@ public class StaffOrderSummary {
         frame.setVisible(true);
     }
 
+    /**
+     * Creates and returns a styled button with a given text and background color.
+     *
+     * @param text The text to display on the button.
+     * @param backgroundColor The background color of the button.
+     * @return The styled button.
+     */
     private JButton createStyledButton(String text, Color backgroundColor) {
         JButton button = new JButton(text);
         button.setBackground(backgroundColor);
@@ -113,6 +131,9 @@ public class StaffOrderSummary {
         return button;
     }
 
+    /**
+     * Populates the order table with data retrieved from the database.
+     */
     private void populateOrderTable() {
         List<Object[]> orders = DatabaseManager.getOrders();
         for (Object[] order : orders) {
@@ -126,6 +147,11 @@ public class StaffOrderSummary {
         filterOrders("Preparing");
     }
 
+    /**
+     * Filters orders displayed in the table by a given status.
+     *
+     * @param status The status to filter by (e.g., "Preparing", "Ready", or "Complete").
+     */
     private void filterOrders(String status) {
         tableModel.setRowCount(0);
         List<Object[]> orders = DatabaseManager.getOrders();
@@ -140,6 +166,10 @@ public class StaffOrderSummary {
         }
     }
 
+    /**
+     * A custom button renderer for the "Status" column.
+     * It renders different button text based on the order status.
+     */
     private class StatusButtonRenderer extends JButton implements javax.swing.table.TableCellRenderer {
         public StatusButtonRenderer() {
             setOpaque(true);
@@ -152,6 +182,12 @@ public class StaffOrderSummary {
             return this;
         }
 
+        /**
+         * Returns the appropriate button label based on the order status.
+         *
+         * @param status The status of the order.
+         * @return The button label corresponding to the order status.
+         */
         private String getButtonLabel(String status) {
             if ("Preparing".equalsIgnoreCase(status)) {
                 return "Mark as Ready";
@@ -164,6 +200,10 @@ public class StaffOrderSummary {
         }
     }
 
+    /**
+     * A custom button editor for the "Status" column.
+     * It allows the user to edit the order status by clicking a button.
+     */
     private class StatusButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String label;
@@ -212,6 +252,12 @@ public class StaffOrderSummary {
             return label;
         }
 
+        /**
+         * Returns the appropriate button label based on the order status.
+         *
+         * @param status The status of the order.
+         * @return The button label corresponding to the order status.
+         */
         private String getButtonLabel(String status) {
             if ("Preparing".equalsIgnoreCase(status)) {
                 return "Mark as Ready";

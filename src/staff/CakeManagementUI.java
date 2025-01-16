@@ -10,16 +10,25 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
+/**
+ * Provides a graphical user interface (GUI) for managing cakes in the bakery's inventory.
+ * The interface allows users to insert, update, and delete cake records,
+ * and displays the cake data in a table format.
+ */
 public class CakeManagementUI {
     private static final int MAX_CAKES = 6;
 
+    /**
+     * Creates and displays the main GUI for the Cake Management System.
+     * This method sets up the frame, table, buttons, and their associated actions.
+     */
     static void createAndShowGUI() {
         JFrame frame = new JFrame("Cake Management System");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 400);
         frame.setLayout(new BorderLayout());
 
-        // Custom Panel for Table
+        // Table Panel Setup
         JPanel tablePanel = new JPanel(new BorderLayout());
         DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Name", "Price", "Stock", "Image Path"}, 0);
         JTable cakeTable = new JTable(tableModel);
@@ -28,18 +37,18 @@ public class CakeManagementUI {
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         frame.add(tablePanel, BorderLayout.CENTER);
 
-        // Customizing Table Appearance
+        // Customize table appearance
         cakeTable.setFillsViewportHeight(true);
         cakeTable.getTableHeader().setReorderingAllowed(false);
         cakeTable.setGridColor(Color.GRAY);
         cakeTable.setSelectionBackground(new Color(230, 230, 255));
 
-        // Button Panel
+        // Button Panel Setup
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(new Color(240, 240, 240)); // Light gray background
 
-        // Customize buttons with icons and colors
+        // Buttons for operations and add buttons to the panel
         JButton insertButton = new JButton("Insert Cake");
         insertButton.setBackground(new Color(100, 200, 100));
         insertButton.setForeground(Color.WHITE);
@@ -53,18 +62,25 @@ public class CakeManagementUI {
         deleteButton.setForeground(Color.WHITE);
         deleteButton.setFocusPainted(false);
 
-        // Add buttons to panel
+        // Add buttons to the panel
         buttonPanel.add(insertButton);
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Load cakes into the table
+        // Load existing cakes into the table
         loadCakes(tableModel);
 
-        // Insert Cake Action
+        /**
+         * Handles the insertion of a new cake into the system.
+         * Prompts the user to input cake details such as name, price, stock, and image.
+         * Saves the image to the specified directory and inserts the cake details into the database.
+         *
+         * @param e the action event triggered when the "Insert" button is clicked.
+         */
         insertButton.addActionListener(e -> {
             if (DatabaseManager.getCakesCount() < MAX_CAKES) {
+                //
                 String name = JOptionPane.showInputDialog(frame, "Enter Cake Name:");
                 String priceInput = JOptionPane.showInputDialog(frame, "Enter Cake Price:");
                 String stockInput = JOptionPane.showInputDialog(frame, "Enter Cake Stock:");
@@ -112,7 +128,13 @@ public class CakeManagementUI {
             }
         });
 
-        // Update Cake Action
+        /**
+         * Handles updating the details of an existing cake.
+         * Allows the user to update the name, price, stock, and optionally, the image of the selected cake.
+         * If the image is updated, it is copied to the specified directory and the database is updated accordingly.
+         *
+         * @param e the action event triggered when the "Update" button is clicked.
+         */
         updateButton.addActionListener(e -> {
             int selectedRow = cakeTable.getSelectedRow();
             if (selectedRow != -1) {
@@ -170,7 +192,13 @@ public class CakeManagementUI {
             }
         });
 
-        // Delete Cake Action
+        /**
+         * Handles the deletion of a selected cake from the system.
+         * Prompts the user for confirmation before deletion.
+         * Removes the cake entry from the database and deletes the associated image file from the specified directory.
+         *
+         * @param e the action event triggered when the "Delete" button is clicked.
+         */
         deleteButton.addActionListener(e -> {
             int selectedRow = cakeTable.getSelectedRow();
             if (selectedRow != -1) {
@@ -202,6 +230,12 @@ public class CakeManagementUI {
         frame.setVisible(true);
     }
 
+    /**
+     * Loads the list of cakes from the database into the table model.
+     * Clears any existing rows in the table model before adding the fetched cake data.
+     *
+     * @param tableModel the table model to be populated with cake data.
+     */
     private static void loadCakes(DefaultTableModel tableModel) {
         tableModel.setRowCount(0); // Clear existing rows
         List<Object[]> cakes = DatabaseManager.getCakes();
